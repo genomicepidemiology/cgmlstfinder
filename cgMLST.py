@@ -138,20 +138,21 @@ if __name__ == '__main__':
     prgs = Dependencies(args.config)
 
     # Species database
-    db_species = args.databases + "/" + args.species + "/" + args.species
+    db_dir = args.databases + "/" + args.species
+    db_species = db_dir + "/" + args.species
 
     # Test if database is found and indexed
     db_files = [args.species + ".b", args.species + ".length.b",
                 args.species + ".name.b"]
     for db_file in db_files:
-        if(not os.path.isfile(db_species + "/" + db_file)):
+        if(not os.path.isfile(db_dir + "/" + db_file)):
             eprint("ERROR: A KMA index file seems to be missing from the"
                    "database directory. You may need to run kma_index.\n"
-                   "Missing file: " + db_species + "/" + db_file)
+                   "Missing file: " + db_dir + "/" + db_file)
             quit(1)
 
     # Gene list
-    gene_list_file = (db_species + "/" + "gene_list.txt")
+    gene_list_file = (db_dir + "/" + "gene_list.txt")
 
     if(not os.path.isfile(gene_list_file)):
         eprint("Gene list not found at expected location:", gene_list_file)
