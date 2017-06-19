@@ -3,8 +3,8 @@ import sys
 import shutil
 import argparse
 
-from Dependencies import Dependencies
-from SeqFileHandler import SeqFile
+from python_module_dependencies import Dependencies
+from python_module_seqfilehandler import SeqFile
 
 
 class KMA():
