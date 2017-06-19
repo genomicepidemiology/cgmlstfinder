@@ -1,9 +1,11 @@
+#! /usr/local/bin/python3
+
+from __future__ import print_function
 import os
 import sys
 import shutil
 import argparse
 import subprocess
-from __future__ import print_function
 
 from python_module_dependencies.Dependencies import Dependencies
 from python_module_seqfilehandler.SeqFileHandler import SeqFile
