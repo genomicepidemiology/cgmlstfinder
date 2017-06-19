@@ -14,7 +14,7 @@ class KMA():
         self.result_file = tmp_dir + "/kma_" + seqfile.filename
         self.seqfile = seqfile
 
-        kma_call_list = [sysprgs["kma"], "-i", seqfile.path]
+        kma_call_list = [prgs["kma"], "-i", seqfile.path]
         if(seqfile.pe_file_reverse):
             kma_call_list.append(seqfile.pe_file_reverse)
         kma_call_list.append([
