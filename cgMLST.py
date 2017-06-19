@@ -152,7 +152,7 @@ if __name__ == '__main__':
             quit(1)
 
     # Gene list
-    gene_list_file = (db_dir + "/" + "gene_list.txt")
+    gene_list_file = (db_dir + "/" + "list_genes.txt")
 
     if(not os.path.isfile(gene_list_file)):
         eprint("Gene list not found at expected location:", gene_list_file)
