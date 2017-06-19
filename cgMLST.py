@@ -2,6 +2,7 @@ import os
 import sys
 import shutil
 import argparse
+import subprocess
 
 from python_module_dependencies.Dependencies import Dependencies
 from python_module_seqfilehandler.SeqFileHandler import SeqFile
