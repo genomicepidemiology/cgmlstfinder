@@ -65,6 +65,9 @@ class AlleleMatrix():
     def __init__(self, gene_list, output, kma_object, python2_path="python"):
         """
         """
+        self.output = output
+        self.kma = kma_object
+
         # Check external script file
         script = (os.path.dirname(os.path.realpath(__file__))
                   + "/scripts/Listeria_cgMLST_matrix_ver01_May17.py")
@@ -73,8 +76,13 @@ class AlleleMatrix():
                    "File missing: " + script)
             quit(1)
 
+        # Calculate best hits if needed
+        if(kma_object.cgmlst_file is None):
+            kma_object.calc_best_hits
+
         # Build script command list
-        cmd = [python2_path, script, ]
+        cmd = [python2_path, script, gene_list, output, kma_object.cgmlst_file]
+        subprocess.call(cmd)
 
 
 if __name__ == '__main__':
@@ -92,7 +100,7 @@ if __name__ == '__main__':
     # Optional arguments
     parser.add_argument("-o", "--output",
                         help="Output prefix.",
-                        default="./metadata",
+                        default="./cgMLST_",
                         metavar="OUTPUT_PREFIX")
     parser.add_argument("-s", "--species",
                         help="Species scheme to apply.",
@@ -165,3 +173,9 @@ if __name__ == '__main__':
         seq_kma = KMA(seqfile=seqfile, tmp_dir=args.tmp_dir, db=db_species,
                       gene_list=gene_list_file, kma_path=prgs["kma"])
         eprint("Finished KMA for: " + seq_kma.seqfile.filename)
+
+        matrix = AlleleMatrix(gene_list=gene_list_file,
+                              output=args.output + seqfile.filename + ".mat",
+                              kma_object=seq_kma,
+                              python2_path=prgs["python2.7"])
+        eprint("Finished allele matrix for: " + seq_kma.seqfile.filename)
