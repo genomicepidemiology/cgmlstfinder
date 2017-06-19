@@ -180,3 +180,5 @@ if __name__ == '__main__':
                               kma_object=seq_kma,
                               python2_path=prgs["python2.7"])
         eprint("Finished allele matrix for: " + seq_kma.seqfile.filename)
+
+    eprint("Done")
