@@ -23,6 +23,7 @@ class KMA():
             "-mem_mode",
             "-delta 1023",
             "-o", self.result_file]
+        print(str(kma_call_list))
         subprocess.call(kma_call_list)
 
 
