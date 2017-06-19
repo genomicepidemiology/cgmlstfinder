@@ -3,28 +3,76 @@ import sys
 import shutil
 import argparse
 import subprocess
+from __future__ import print_function
 
 from python_module_dependencies.Dependencies import Dependencies
 from python_module_seqfilehandler.SeqFileHandler import SeqFile
 
 
+def eprint(*args, **kwargs):
+    print(*args, file=sys.stderr, **kwargs)
+
+
 class KMA():
 
-    def __init__(self, seqfile, tmp_dir):
+    def __init__(self, seqfile, tmp_dir, db, gene_list, kma_path="kma"):
+        """ Constructor map reads from seqfile object using kma.
+        """
 
         self.result_file = tmp_dir + "/kma_" + seqfile.filename
+        self.cgmlst_file = None
         self.seqfile = seqfile
 
-        kma_call_list = [prgs["kma"], "-i", seqfile.path]
+        # Create kma command line list
+        kma_call_list = [kma_path, "-i", seqfile.path]
+        # Add reverse reads if paired-end data
         if(seqfile.pe_file_reverse):
             kma_call_list.append(seqfile.pe_file_reverse)
+
         kma_call_list += [
             "-t_db", args.databases + "/" + args.species + "/" + args.species,
             "-mem_mode",
-            "-delta", "1023",
+            # "-delta", "1023",
+            "-delta", "511",
             "-o", self.result_file]
-        print(str(kma_call_list))
+
+        eprint("# KMA call: " + " ".join(kma_call_list))
+
         subprocess.call(kma_call_list)
+
+    def calc_best_hits(self):
+        """ Extracts best hits from kma results
+        """
+
+        cmd_best_hit = (
+            "cat " self.result_file + ".res | "
+            "sed 's/CAMP/CAMP\\t/g' | "
+            "sed 's/_/\\t/g' | "
+            "sed 's/#Template/#Template\\tGene\\tAllele/g' | "
+            "sort -k9 -r | "
+            "gawk '{if (!($2 in taken)){print $0,$2};taken[$2]=$2}' | "
+            "sort -k2 | "
+            "grep -v '#' > "
+            + self.cgmlst_file)
+        subprocess.call(cmd_best_hit, shell=True)
+        self.cgmlst_file = self.result_file + ".cgMLST"
+
+
+class AlleleMatrix():
+
+    def __init__(self, gene_list, output, kma_object, python2_path="python"):
+        """
+        """
+        # Check external script file
+        script = (os.path.dirname(os.path.realpath(__file__))
+                  + "/scripts/Listeria_cgMLST_matrix_ver01_May17.py")
+        if(not os.path.isfile(script)):
+            eprint("ERROR: Something is wrong with your installation.\n"
+                   "File missing: " + script)
+            quit(1)
+
+        # Build script command list
+        cmd = [python2_path, script, ]
 
 
 if __name__ == '__main__':
@@ -68,6 +116,10 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
+    # # TEST DATA # #
+    # TODO This part should be replaced to handle all species.
+    args.species = "listeria"
+
     # Handle tmp dir
     args.tmp_dir = os.path.abspath(args.tmp_dir)
     os.makedirs(args.tmp_dir, exist_ok=True)
@@ -77,19 +129,36 @@ if __name__ == '__main__':
         args.config = os.path.dirname(
             os.path.realpath(__file__)) + "/cgMLST_config.txt"
     if(not os.path.isfile(args.config)):
-        print("Configuration file not found:", args.config)
+        eprint("Configuration file not found:", args.config)
         quit(1)
 
     # Get external software dependencies
     prgs = Dependencies(args.config)
 
-    # # TEST DATA # #
-    # TODO This part should be replaced to handle all species.
-    args.species = "listeria"
+    # Species database
+    db_species = args.databases + "/" + args.species + "/" + args.species
+
+    # Test if database is found and indexed
+    db_files = [args.species + ".b", args.species + ".length.b",
+                args.species + ".name.b"]
+    for db_file in db_files:
+        if(not os.path.isfile(db_species + "/" + db_file)):
+            eprint("ERROR: A KMA index file seems to be missing from the"
+                   "database directory. You may need to run kma_index.\n"
+                   "Missing file: " + db_species + "/" + db_file)
+            quit(1)
+
+    # Gene list
+    gene_list_file = (db_species + "/" + "gene_list.txt")
+
+    if(not os.path.isfile(gene_list_file)):
+        eprint("Gene list not found at expected location:", gene_list_file)
+        quit(1)
 
     # Load files and pair them if necessary
     files = SeqFile.parse_files(args.input, phred=33)
 
     for seqfile in files:
-        seq_kma = KMA(seqfile, args.tmp_dir)
-        print("Finished KMA for: " + seq_kma.seqfile.filename)
+        seq_kma = KMA(seqfile=seqfile, tmp_dir=args.tmp_dir, db=db_species,
+                      gene_list=gene_list_file, kma_path=prgs["kma"])
+        eprint("Finished KMA for: " + seq_kma.seqfile.filename)
