@@ -90,4 +90,4 @@ if __name__ == '__main__':
 
     for seqfile in files:
         seq_kma = KMA(seqfile, args.tmp_dir)
-        print("Finished KMA for: " seq_kma.seqfile.filename)
+        print("Finished KMA for: " + seq_kma.seqfile.filename)
