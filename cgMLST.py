@@ -34,8 +34,7 @@ class KMA():
         kma_call_list += [
             "-t_db", args.databases + "/" + args.species + "/" + args.species,
             "-mem_mode",
-            # "-delta", "1023",
-            "-delta", "511",
+            "-delta", "1023",
             "-o", self.result_file]
 
         eprint("# KMA call: " + " ".join(kma_call_list))
@@ -170,10 +169,12 @@ if __name__ == '__main__':
     files = SeqFile.parse_files(args.input, phred=33)
 
     for seqfile in files:
+        # Run KMA to find alleles
         seq_kma = KMA(seqfile=seqfile, tmp_dir=args.tmp_dir, db=db_species,
                       gene_list=gene_list_file, kma_path=prgs["kma"])
         eprint("Finished KMA for: " + seq_kma.seqfile.filename)
 
+        # Create allele matrix
         matrix = AlleleMatrix(gene_list=gene_list_file,
                               output=args.output + seqfile.filename + ".mat",
                               kma_object=seq_kma,
