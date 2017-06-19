@@ -18,11 +18,11 @@ class KMA():
         kma_call_list = [prgs["kma"], "-i", seqfile.path]
         if(seqfile.pe_file_reverse):
             kma_call_list.append(seqfile.pe_file_reverse)
-        kma_call_list.append([
+        kma_call_list + [
             "-t_db", args.databases + "/" + args.species + "/" + args.species,
             "-mem_mode",
             "-delta 1023",
-            "-o", self.result_file])
+            "-o", self.result_file]
         subprocess.call(kma_call_list)
 
 
