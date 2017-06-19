@@ -1,3 +1,6 @@
 [submodule "python_module_dependencies"]
 	path = python_module_dependencies
 	url = https://RolfKaas@bitbucket.org/RolfKaas/python_module_dependencies.git
+[submodule "python_module_seqfilehandler"]
+	path = python_module_seqfilehandler
+	url = https://RolfKaas@bitbucket.org/RolfKaas/python_module_seqfilehandler.git
