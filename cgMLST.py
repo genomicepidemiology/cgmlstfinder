@@ -34,7 +34,7 @@ if __name__ == '__main__':
     # Posotional arguments
     parser.add_argument("input",
                         help="FASTQ files to do cgMLST on.",
-                        nargs="+"
+                        nargs="+",
                         metavar="FASTQ",
                         default=None)
     # Optional arguments
