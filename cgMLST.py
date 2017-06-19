@@ -11,7 +11,7 @@ class KMA():
 
     def __init__(self, seqfile, tmp_dir):
 
-        self.result_file = temp_dir + "/kma_" + seqfile.filename
+        self.result_file = tmp_dir + "/kma_" + seqfile.filename
         self.seqfile = seqfile
 
         kma_call_list = [sysprgs["kma"], "-i", seqfile.path]
