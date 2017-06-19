@@ -45,7 +45,7 @@ class KMA():
         """
 
         cmd_best_hit = (
-            "cat " self.result_file + ".res | "
+            "cat " + self.result_file + ".res | "
             "sed 's/CAMP/CAMP\\t/g' | "
             "sed 's/_/\\t/g' | "
             "sed 's/#Template/#Template\\tGene\\tAllele/g' | "
