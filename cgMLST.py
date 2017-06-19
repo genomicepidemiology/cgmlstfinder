@@ -21,7 +21,7 @@ class KMA():
         kma_call_list += [
             "-t_db", args.databases + "/" + args.species + "/" + args.species,
             "-mem_mode",
-            "-delta 1023",
+            "-delta", "1023",
             "-o", self.result_file]
         print(str(kma_call_list))
         subprocess.call(kma_call_list)
