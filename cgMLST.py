@@ -81,7 +81,7 @@ class AlleleMatrix():
         # Calculate best hits if needed
         if(kma_object.cgmlst_file is None):
             eprint("Cond: Allele calc best hits")
-            kma_object.calc_best_hits
+            kma_object.calc_best_hits()
 
         # Build script command list
         cmd = [python2_path, script, gene_list, output, kma_object.cgmlst_file]
