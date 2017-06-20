@@ -171,6 +171,7 @@ if __name__ == '__main__':
         quit(1)
 
     # Load files and pair them if necessary
+    eprint("Parsing files:" + str(args.input))
     files = SeqFile.parse_files(args.input, phred=33)
 
     for seqfile in files:
