@@ -45,7 +45,7 @@ class KMA():
     def calc_best_hits(self):
         """ Extracts best hits from kma results
         """
-        eprint("Calc best hit:")
+        eprint("Func: Calc best hit:")
         cmd_best_hit = (
             "cat " + self.result_file + ".res | "
             "sed 's/CAMP/CAMP\\t/g' | "
@@ -66,6 +66,7 @@ class AlleleMatrix():
     def __init__(self, gene_list, output, kma_object, python2_path="python"):
         """
         """
+        eprint("Creating AlleleMatrix")
         self.output = output
         self.kma = kma_object
 
@@ -79,6 +80,7 @@ class AlleleMatrix():
 
         # Calculate best hits if needed
         if(kma_object.cgmlst_file is None):
+            eprint("Cond: Allele calc best hits")
             kma_object.calc_best_hits
 
         # Build script command list
