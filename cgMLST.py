@@ -103,9 +103,9 @@ if __name__ == '__main__':
                         default=None)
     # Optional arguments
     parser.add_argument("-o", "--output",
-                        help="Output prefix.",
-                        default="./cgMLST_",
-                        metavar="OUTPUT_PREFIX")
+                        help="Output file.",
+                        default="AlleleMatrix.mat",
+                        metavar="OUTPUT_FILE")
     parser.add_argument("-s", "--species",
                         help="Species scheme to apply.",
                         default=None,
@@ -174,6 +174,8 @@ if __name__ == '__main__':
     eprint("Parsing files:" + str(args.input))
     files = SeqFile.parse_files(args.input, phred=33)
 
+    matrices = []
+
     for seqfile in files:
         # Run KMA to find alleles
         seq_kma = KMA(seqfile=seqfile, tmp_dir=args.tmp_dir, db=db_species,
@@ -182,9 +184,23 @@ if __name__ == '__main__':
 
         # Create allele matrix
         matrix = AlleleMatrix(gene_list=gene_list_file,
-                              output=args.output + seqfile.filename + ".mat",
+                              output=(args.tmp_dir + "/cgMLST_"
+                                      + seqfile.filename + ".mat"),
                               kma_object=seq_kma,
                               python2_path=prgs["python2.7"])
         eprint("Finished allele matrix for: " + seq_kma.seqfile.filename)
+        matrices.append(matrix)
+
+    output_str = ""
+    header = ""
+    for matrix in matrices:
+        with open(matrix.output, "r") as fh:
+            header = fh.readline()
+            line = fh.readline()
+        output_str += line
+
+    output_str = header + output_str
+    with open(args.output, "w") as fh:
+        fh.write(output_str)
 
     eprint("Done")
