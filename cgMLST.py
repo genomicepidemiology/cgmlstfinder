@@ -45,7 +45,7 @@ class KMA():
     def calc_best_hits(self):
         """ Extracts best hits from kma results
         """
-
+        eprint("Calc best hit:")
         cmd_best_hit = (
             "cat " + self.result_file + ".res | "
             "sed 's/CAMP/CAMP\\t/g' | "
@@ -58,6 +58,7 @@ class KMA():
             + self.cgmlst_file)
         subprocess.call(cmd_best_hit, shell=True)
         self.cgmlst_file = self.result_file + ".cgMLST"
+        eprint("Call: " + cmd_best_hit)
 
 
 class AlleleMatrix():
