@@ -130,10 +130,6 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    # # TEST DATA # #
-    # TODO This part should be replaced to handle all species.
-    args.species = "listeria"
-
     # Handle tmp dir
     args.tmp_dir = os.path.abspath(args.tmp_dir)
     os.makedirs(args.tmp_dir, exist_ok=True)
