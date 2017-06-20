@@ -21,7 +21,8 @@ class KMA():
         """ Constructor map reads from seqfile object using kma.
         """
 
-        self.result_file = tmp_dir + "/kma_" + seqfile.filename
+        result_file_tmp = tmp_dir + "/kma_" + seqfile.filename
+        self.result_file = result_file_tmp + ".res"
         self.result_file = "/home/data1/services/cgMLSTFinder/test_data/cgMLST_tmp_dir/kma_SRR972394_1.res"
         self.cgmlst_file = None
         self.seqfile = seqfile
@@ -36,7 +37,7 @@ class KMA():
             "-t_db", args.databases + "/" + args.species + "/" + args.species,
             "-mem_mode",
             "-delta", "1023",
-            "-o", self.result_file]
+            "-o", result_file_tmp]
 
         eprint("# KMA call: " + " ".join(kma_call_list))
 
@@ -48,7 +49,7 @@ class KMA():
         eprint("Func: Calc best hit:")
         self.cgmlst_file = self.result_file + ".cgMLST"
         cmd_best_hit = (
-            "cat " + self.result_file + ".res | "
+            "cat " + self.result_file + " | "
             "sed 's/CAMP/CAMP\\t/g' | "
             "sed 's/_/\\t/g' | "
             "sed 's/#Template/#Template\\tGene\\tAllele/g' | "
