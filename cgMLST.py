@@ -47,7 +47,7 @@ class KMA():
         """ Extracts best hits from kma results
         """
         eprint("Func: Calc best hit:")
-        self.cgmlst_file = self.result_file + ".cgMLST"
+        self.cgmlst_file = self.result_file[:-4] + ".cgMLST"
         cmd_best_hit = (
             "cat " + self.result_file + " | "
             "sed 's/CAMP/CAMP\\t/g' | "
