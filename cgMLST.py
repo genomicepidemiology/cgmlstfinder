@@ -22,7 +22,7 @@ class KMA():
         """
 
         self.result_file = tmp_dir + "/kma_" + seqfile.filename
-        self.result_file = "/home/data1/services/cgMLSTFinder/test_data/cgMLST_tmp_dir"
+        self.result_file = "/home/data1/services/cgMLSTFinder/test_data/cgMLST_tmp_dir/kma_SRR972394_1.res"
         self.cgmlst_file = None
         self.seqfile = seqfile
 
