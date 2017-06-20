@@ -23,7 +23,7 @@ class KMA():
 
         result_file_tmp = tmp_dir + "/kma_" + seqfile.filename
         self.result_file = result_file_tmp + ".res"
-        self.result_file = "/home/data1/services/cgMLSTFinder/test_data/cgMLST_tmp_dir/kma_SRR972394_1.res"
+        #self.result_file = "/home/data1/services/cgMLSTFinder/test_data/cgMLST_tmp_dir/kma_SRR972394_1.res"
         self.cgmlst_file = None
         self.seqfile = seqfile
 
@@ -41,7 +41,7 @@ class KMA():
 
         eprint("# KMA call: " + " ".join(kma_call_list))
 
-        # subprocess.call(kma_call_list)
+        subprocess.call(kma_call_list)
 
     def calc_best_hits(self):
         """ Extracts best hits from kma results
