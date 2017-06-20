@@ -46,6 +46,7 @@ class KMA():
         """ Extracts best hits from kma results
         """
         eprint("Func: Calc best hit:")
+        self.cgmlst_file = self.result_file + ".cgMLST"
         cmd_best_hit = (
             "cat " + self.result_file + ".res | "
             "sed 's/CAMP/CAMP\\t/g' | "
@@ -57,7 +58,6 @@ class KMA():
             "grep -v '#' > "
             + self.cgmlst_file)
         subprocess.call(cmd_best_hit, shell=True)
-        self.cgmlst_file = self.result_file + ".cgMLST"
         eprint("Call: " + cmd_best_hit)
 
 
