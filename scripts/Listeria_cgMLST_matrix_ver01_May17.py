@@ -14,7 +14,7 @@ f.close()
 
 all_loci = []
 for i in allLines:
-	all_loci.append(i.split('\n')[0])
+	all_loci.append(i.split('\n')[0]).replace("_", "")) #if "_" in loci name, delete "_"
 	
 #for i in range(1,int(sys.argv[1])+1):
 #	all_loci.append('CAMP' + str(i).zfill(4))
@@ -39,7 +39,7 @@ for file in filepath2:
 	alleles = {}
 	for i in allLines:
 		#print i.split('\t')
-		alleles[i.split('\t')[0] + '_' + i.split('\t')[1]] = i.split('\t')[2].split("|")[0].replace(" ", "")
+		alleles[i.split('\t')[0] + i.split('\t')[1]] = i.split('\t')[2].split("|")[0].replace(" ", "")
 
 	matrix.write(file)
 	for i in all_loci:
