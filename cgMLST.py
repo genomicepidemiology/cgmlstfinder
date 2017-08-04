@@ -6,6 +6,7 @@ import sys
 import shutil
 import argparse
 import subprocess
+import pickle
 
 from python_module_dependencies.Dependencies import Dependencies
 from python_module_seqfilehandler.SeqFileHandler import SeqFile
@@ -88,6 +89,51 @@ class AlleleMatrix():
         cmd = [python2_path, script, gene_list, output, kma_object.cgmlst_file]
         subprocess.call(cmd)
 
+def st_typing(pickle_path, input, output_file):
+    print("Finding ST type")
+    #load pickle 
+    try:
+        loci_allel_dict = pickle.load(open( pickle_path, "rb"))
+    except:
+        sys.stdout.write("Error, pickle not found", pickle_path)
+        quit(1)
+        
+    #open output file
+    outfile = open(output_file, "w")
+    #write header in output file
+    outfile.write("Sample_Names\tcgST_Assigned\tNo_of_Found_Allels\tSimilarity\n")
+    
+    input = input.split("\n")
+    
+    #find best ST type for all allel profiles
+    loci = input[0].strip().split("\t")
+    for sample_str in input[1:]:
+        sample = sample_str.strip().split("\t")
+        sample_name = sample[0]
+        st_hits = []
+        for i in range(1, len(sample)):
+            allel = sample[i]
+            locus = loci[i]
+            try:
+                st_hits += loci_allel_dict[locus][allel]
+            #keyError may occur if loci/allel combination not seen in the large profile file
+            except KeyError:
+                pass
+        #find most frequent st_type in st_hits
+        score = {}
+        max_count = 1
+        best_hit = ""
+        for hit in st_hits:
+            if hit in score:
+                score[hit] += 1
+                if max_count < score[hit]:
+                    max_count = score[hit]
+                    best_hit = hit
+            else:
+                score[hit] = 1
+        outfile.write(sample_name + "\t" + str(best_hit) + "\t" + str(max_count)  + "\t" + str(round((max_count/(len(loci)-1))*100, 2)) + "\n")
+	
+    outfile.close()	
 
 if __name__ == '__main__':
 
@@ -127,6 +173,10 @@ if __name__ == '__main__':
                               as the main script. ",
                         default=None,
                         metavar="FILE")
+    parser.add_argument("-st", "--st_output",
+                        help="ST-typing Output file.",
+                        default="cgMLST_STtypes.mat",
+                        metavar="ST-TYPING_OUTPUT_FILE")
 
     args = parser.parse_args()
 
@@ -198,5 +248,12 @@ if __name__ == '__main__':
     output_str = header + output_str
     with open(args.output, "w") as fh:
         fh.write(output_str)
+
+    # create st-type file if pickle containing profile list excist
+    pickle_path = db_dir + "/cgMLST_profile.p"
+    if os.path.isfile(pickle_path):
+        st_typing(pickle_path, output_str, args.st_output)
+    else:
+        args.st_output = None 
 
     eprint("Done")
