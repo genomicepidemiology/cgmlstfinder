@@ -89,37 +89,53 @@ class AlleleMatrix():
         cmd = [python2_path, script, gene_list, output, kma_object.cgmlst_file]
         subprocess.call(cmd)
 
-def st_typing(pickle_path, input, output_file):
-    print("Finding ST type")
-    #load pickle 
+
+@staticmethod
+def st_typing(pickle_path, inp, output_file):
+    eprint("Finding ST type")
+    # Load pickle
     try:
-        loci_allel_dict = pickle.load(open( pickle_path, "rb"))
+        loci_allel_dict = pickle.load(open(pickle_path, "rb"))
+    # TODO: Bare excepts are dangerous as they can cover up unexpected bugs.
+    #       Find out what exception should be catched here.
     except:
         sys.stdout.write("Error, pickle not found", pickle_path)
         quit(1)
-        
-    #open output file
-    outfile = open(output_file, "w")
-    #write header in output file
-    outfile.write("Sample_Names\tcgST_Assigned\tNo_of_Found_Allels\tSimilarity\n")
-    
-    input = input.split("\n")
-    
-    #find best ST type for all allel profiles
-    loci = input[0].strip().split("\t")
-    for sample_str in input[1:]:
+
+    # Open output file
+    # outfile = open(output_file, "w")
+    # Write header in output file
+    # outfile.write("Sample_Names\tcgST_Assigned\tNo_of_Found_Allels\t"
+    #              "Similarity\n")
+    output = ("Sample_Names\tcgST_Assigned\tNo_of_Found_Allels\t"
+              "Similarity\n")
+
+    inp = inp.split("\n")
+
+    # Find best ST type for all allel profiles
+
+    # First line contains matrix column headers, which are the specific loci
+    loci = inp[0].strip().split("\t")
+
+    for sample_str in inp[1:]:
         sample = sample_str.strip().split("\t")
         sample_name = sample[0]
         st_hits = []
         for i in range(1, len(sample)):
             allel = sample[i]
             locus = loci[i]
-            try:
-                st_hits += loci_allel_dict[locus][allel]
-            #keyError may occur if loci/allel combination not seen in the large profile file
-            except KeyError:
-                pass
-        #find most frequent st_type in st_hits
+
+            # Loci/Allel combination may not be found in the large profile file
+            st_hits += loci_allel_dict[locus].get(allel, None)
+
+            # try:
+            #    st_hits += loci_allel_dict[locus][allel]
+            # KeyError may occur if loci/allel combination not seen in the
+            # large profile file
+            # except KeyError:
+            #    pass
+
+        # Find most frequent st_type in st_hits
         score = {}
         max_count = 1
         best_hit = ""
@@ -129,11 +145,20 @@ def st_typing(pickle_path, input, output_file):
                 if max_count < score[hit]:
                     max_count = score[hit]
                     best_hit = hit
-            else:
+            elif(hit is not None):
                 score[hit] = 1
-        outfile.write(sample_name + "\t" + str(best_hit) + "\t" + str(max_count)  + "\t" + str(round((max_count/(len(loci)-1))*100, 2)) + "\n")
-	
-    outfile.close()	
+        # outfile.write(sample_name + "\t" + str(best_hit) + "\t"
+        #              + str(max_count) + "\t"
+        #              + str(round((max_count/(len(loci)-1))*100, 2)) + "\n")
+        output += (sample_name + "\t" + str(best_hit) + "\t" + str(max_count)
+                   + "\t" + str(round((max_count / (len(loci) - 1)) * 100, 2))
+                   + "\n")
+
+    with open(args.output, "w") as fh:
+        fh.write(output)
+
+    # outfile.close()
+
 
 if __name__ == '__main__':
 
@@ -254,6 +279,6 @@ if __name__ == '__main__':
     if os.path.isfile(pickle_path):
         st_typing(pickle_path, output_str, args.st_output)
     else:
-        args.st_output = None 
+        args.st_output = None
 
     eprint("Done")
