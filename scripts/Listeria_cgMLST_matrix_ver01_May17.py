@@ -14,7 +14,7 @@ f.close()
 
 all_loci = []
 for i in allLines:
-	all_loci.append(i.split('\n')[0]).replace("_", "")) #if "_" in loci name, delete "_"
+	all_loci.append(i.split('\n')[0].replace("_", "")) #if "_" in loci name, delete "_"
 	
 #for i in range(1,int(sys.argv[1])+1):
 #	all_loci.append('CAMP' + str(i).zfill(4))
