@@ -89,8 +89,8 @@ class AlleleMatrix():
         cmd = [python2_path, script, gene_list, output, kma_object.cgmlst_file]
         subprocess.call(cmd)
 
-
-@staticmethod
+# @staticmethod -> TypeError: 'staticmethod' object is not callable
+#@staticmethod
 def st_typing(pickle_path, inp, output_file):
     eprint("Finding ST type")
     # Load pickle
@@ -101,10 +101,10 @@ def st_typing(pickle_path, inp, output_file):
         quit(1)
 
     # Write header in output file
-    output = ("Sample_Names\tcgST_Assigned\tNo_of_Found_Allels\t"
+    output = ("Sample_Names\tcgST_Assigned\tNo_of_Allels_Found\t"
               "Similarity\n")
 
-    inp = inp.split("\n")
+    inp = inp.strip().split("\n")
 
     # Find best ST type for all allel profiles
 
@@ -120,7 +120,7 @@ def st_typing(pickle_path, inp, output_file):
             locus = loci[i]
 
             # Loci/Allel combination may not be found in the large profile file
-            st_hits += loci_allel_dict[locus].get(allel, None)
+            st_hits += loci_allel_dict[locus].get(allel, ["None"])
 
         # Find most frequent st_type in st_hits
         score = {}
@@ -132,7 +132,7 @@ def st_typing(pickle_path, inp, output_file):
                 if max_count < score[hit]:
                     max_count = score[hit]
                     best_hit = hit
-            elif(hit is not None):
+            elif(hit is not "None"):
                 score[hit] = 1
 
         # Prepare output string
@@ -140,7 +140,7 @@ def st_typing(pickle_path, inp, output_file):
                    + "\t" + str(round((max_count / (len(loci) - 1)) * 100, 2))
                    + "\n")
  
-    with open(args.output, "w") as fh:
+    with open(args.st_output, "w") as fh:
         fh.write(output)
 
 
@@ -256,6 +256,7 @@ if __name__ == '__main__':
         output_str += line
 
     output_str = header + output_str
+
     with open(args.output, "w") as fh:
         fh.write(output_str)
 
