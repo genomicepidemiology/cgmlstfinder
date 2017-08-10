@@ -96,17 +96,11 @@ def st_typing(pickle_path, inp, output_file):
     # Load pickle
     try:
         loci_allel_dict = pickle.load(open(pickle_path, "rb"))
-    # TODO: Bare excepts are dangerous as they can cover up unexpected bugs.
-    #       Find out what exception should be catched here.
-    except:
+    except IOError:
         sys.stdout.write("Error, pickle not found", pickle_path)
         quit(1)
 
-    # Open output file
-    # outfile = open(output_file, "w")
     # Write header in output file
-    # outfile.write("Sample_Names\tcgST_Assigned\tNo_of_Found_Allels\t"
-    #              "Similarity\n")
     output = ("Sample_Names\tcgST_Assigned\tNo_of_Found_Allels\t"
               "Similarity\n")
 
@@ -128,13 +122,6 @@ def st_typing(pickle_path, inp, output_file):
             # Loci/Allel combination may not be found in the large profile file
             st_hits += loci_allel_dict[locus].get(allel, None)
 
-            # try:
-            #    st_hits += loci_allel_dict[locus][allel]
-            # KeyError may occur if loci/allel combination not seen in the
-            # large profile file
-            # except KeyError:
-            #    pass
-
         # Find most frequent st_type in st_hits
         score = {}
         max_count = 1
@@ -147,17 +134,15 @@ def st_typing(pickle_path, inp, output_file):
                     best_hit = hit
             elif(hit is not None):
                 score[hit] = 1
-        # outfile.write(sample_name + "\t" + str(best_hit) + "\t"
-        #              + str(max_count) + "\t"
-        #              + str(round((max_count/(len(loci)-1))*100, 2)) + "\n")
+
+        # Prepare output string
         output += (sample_name + "\t" + str(best_hit) + "\t" + str(max_count)
                    + "\t" + str(round((max_count / (len(loci) - 1)) * 100, 2))
                    + "\n")
-
+ 
     with open(args.output, "w") as fh:
         fh.write(output)
 
-    # outfile.close()
 
 
 if __name__ == '__main__':
