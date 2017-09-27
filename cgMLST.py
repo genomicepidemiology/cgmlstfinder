@@ -124,55 +124,6 @@ def st_typing(pickle_path, inp, output_file):
     return output
 
 
-
-#def st_typing(pickle_path, input_file, output_file):
-#    print("Finding ST type")
-#    #load pickle 
-#    try:
-#        loci_allel_dict = pickle.load(open( pickle_path, "rb"))
-#    except:
-#        sys.stdout.write("Error, pickle not found", pickle_path)
-#        quit(1)
-#       
-#    #open output file
-#    outfile = open(output_file, "w")
-#    #write header in output file
-#    outfile.write("Sample_Names\tcgST_Assigned\tNo_of_Found_Allels\tSimilarity\n")
-#    
-#    input_file = input_file.split("\n")
-#    
-#    #find best ST type for all allel profiles
-#    loci = input_file[0].strip().split("\t")
-#    for sample_str in input_file[1:]:
-#        sample = sample_str.strip().split("\t")
-#        sample_name = sample[0]
-#        st_hits = []
-#        for i in range(1, len(sample)):
-#	    if i %100 ==0: print(i)
-#            allel = sample[i]
-#            locus = loci[i]
-#            try:
-#                st_hits += loci_allel_dict[locus][allel]
-#            #keyError may occur if loci/allel combination not seen in the large profile file
-#            except KeyError:
-#                pass
-#        #find most frequent st_type in st_hits
-#        score = {}
-#        max_count = 1
-#        best_hit = ""
-#        for hit in st_hits:
-#            if hit in score:
-#                score[hit] += 1
-#                if max_count < score[hit]:
-#                    max_count = score[hit]
-#                    best_hit = hit
-#            else:
-#                score[hit] = 1
-#        outfile.write(sample_name + "\t" + str(best_hit) + "\t" + str(max_count) + "\t" + str(round((max_count/(len(loci)-1))*100, 2)) + "\n")
-#	#outfile.write(sample_name + "\t" + str(best_hit) + "\t" + str(max_count) + "\t" + str(round((max_count/(len(loci)-1))*100, 2)) + "\n")
-#	
-#    outfile.close()	
-
 if __name__ == '__main__':
 
     #
@@ -274,7 +225,8 @@ if __name__ == '__main__':
 
     # write header to output file
     output = ["Genome\t%s" %("\t".join(gene_list))]
-    file_no = 0
+    st_output = ("Sample_Names\tcgST_Assigned\tNo_of_Allels_Found\tSimilarity\n")
+
     for seqfile in files:
         # Run KMA to find alleles
         seq_kma = KMA(seqfile=seqfile, tmp_dir=args.tmp_dir, db=db_species,
@@ -284,7 +236,7 @@ if __name__ == '__main__':
         # get called alleles
         best_alleles = seq_kma.calc_best_hits()
         # prepare output string
-        output_str = args.input[file_no]
+        output_str = seqfile.filename 
         for locus in gene_list:
             locus = locus.strip()
             if locus in best_alleles:
@@ -292,14 +244,11 @@ if __name__ == '__main__':
             else:
                  output_str += "\tN"
         output += [output_str]
-        file_no += 1
-
 
         # create st-type file if pickle containing profile list excist
         pickle_path = db_dir + "/%s_cgMLST_profile.p"%(species)
         if os.path.isfile(pickle_path):
-	    # Write header in output file
-	    st_output = ("Sample_Names\tcgST_Assigned\tNo_of_Allels_Found\tSimilarity\n")
+	    # Write output string to st outfile
             st_output += st_typing(pickle_path, output, args.st_output)
 
         else:
