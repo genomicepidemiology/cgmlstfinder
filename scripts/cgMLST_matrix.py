@@ -3,7 +3,7 @@
 # input file = cgMLST input
 # output file = cgMLST matrix
 #### EXAMPLE #####
-# python campy_cgMLST_matrix.py list_of_MLST_loci ouput_file.txt input.cgMLST
+# python cgMLST_matrix.py gene_list ouput_file.txt input.cgMLST
 
 import sys
 
@@ -13,8 +13,13 @@ allLines = f.readlines()
 f.close()
 
 all_loci = []
+<<<<<<< HEAD:scripts/Listeria_cgMLST_matrix_ver01_May17.py
 for i in allLines:
 	all_loci.append(i.split('\n')[0].replace("_", "")) #if "_" in loci name, delete "_"
+=======
+for line in allLines:
+	all_loci.append(line.strip())) 
+>>>>>>> STtyping_dev:scripts/cgMLST_matrix.py
 	
 #for i in range(1,int(sys.argv[1])+1):
 #	all_loci.append('CAMP' + str(i).zfill(4))
@@ -22,31 +27,34 @@ for i in allLines:
 # write header 
 matrix = open(sys.argv[2],'a')
 matrix.write('Genome')
-for i in all_loci:
+for locus in all_loci:
 	matrix.write('\t')
-	matrix.write(i)
+	matrix.write(locus)
 matrix.write('\n')
 
 
 # open cgMLST input
 filepath2 = sys.argv[3:]
-for file in filepath2:
-	print file, '...'
-	f = open(file,'r')
+for infile in filepath2:
+	print infile, '...'
+	f = open(infile,'r')
 	allLines = f.readlines()
 	f.close()
 
+        # for each locus get the asigned allel
+        matrix.write(infile)
 	alleles = {}
-	for i in allLines:
-		#print i.split('\t')
-		alleles[i.split('\t')[0] + i.split('\t')[1]] = i.split('\t')[2].split("|")[0].replace(" ", "")
+	for line in allLines:
 
-	matrix.write(file)
-	for i in all_loci:
-		#print i
+                line = line.strip().split('\t')
+                locus = line[0]
+                allel = line[1].split("|")[0]
+		alleles[locus] = allel
+
+	for locus in all_loci:
 		matrix.write('\t')
-		if i in alleles:
-			matrix.write(alleles[i])
+		if locus in alleles:
+			matrix.write(alleles[locus])
 		else:
 			matrix.write(str('N'))
 	matrix.write('\n')

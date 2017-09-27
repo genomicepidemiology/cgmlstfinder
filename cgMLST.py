@@ -1,4 +1,4 @@
-#! /usr/local/bin/python3
+#!/home/data1/tools/bin/Anaconda3-2.5.0/bin/python cgMLST.py
 
 from __future__ import print_function
 import os
@@ -7,6 +7,7 @@ import shutil
 import argparse
 import subprocess
 import pickle
+import re
 
 from python_module_dependencies.Dependencies import Dependencies
 from python_module_seqfilehandler.SeqFileHandler import SeqFile
@@ -24,8 +25,7 @@ class KMA():
 
         result_file_tmp = tmp_dir + "/kma_" + seqfile.filename
         self.result_file = result_file_tmp + ".res"
-        #self.result_file = "/home/data1/services/cgMLSTFinder/test_data/cgMLST_tmp_dir/kma_SRR972394_1.res"
-        self.cgmlst_file = None
+        #self.result_file = "/home/hundahl/kma_DTU2017_302_PRJ1085_Campylobacter_jejuni_ZTA14_00124CP_R1.res"
         self.seqfile = seqfile
 
         # Create kma command line list
@@ -35,64 +35,48 @@ class KMA():
             kma_call_list.append(seqfile.pe_file_reverse)
 
         kma_call_list += [
-            "-t_db", args.databases + "/" + args.species + "/" + args.species,
-            "-mem_mode",
-            "-delta", "1023",
-            "-o", result_file_tmp]
+            "-o", result_file_tmp,
+	    "-t_db", args.databases + "/" + species_scheme+ "/" + species_scheme,
+            "-mem_mode"]#,
+	    #"-SW",
+            #"-delta", "1023"]
 
         eprint("# KMA call: " + " ".join(kma_call_list))
-
+        #os.system(" ".join(kma_call_list))
         subprocess.call(kma_call_list)
+        eprint("KMA call ended")
+
 
     def calc_best_hits(self):
-        """ Extracts best hits from kma results
+        """ Extracts best hits from kma results into a dict that is returned
         """
+        matrix = {}
+        #self.cgmlst_file = matrix
         eprint("Func: Calc best hit:")
-        self.cgmlst_file = self.result_file[:-4] + ".cgMLST"
-        cmd_best_hit = (
-            "cat " + self.result_file + " | "
-            "sed 's/CAMP/CAMP\\t/g' | "
-            "sed 's/_/\\t/g' | "
-            "sed 's/#Template/#Template\\tGene\\tAllele/g' | "
-            "sort -k9 -r | "
-            "gawk '{if (!($2 in taken)){print $0,$2};taken[$2]=$2}' | "
-            "sort -k2 | "
-            "grep -v '#' > "
-            + self.cgmlst_file)
-        subprocess.call(cmd_best_hit, shell=True)
-        eprint("Call: " + cmd_best_hit)
+        
+        # Create dict of locus and allel with the highest quality score
+        with open(self.result_file, "r") as result_file:
+            header = result_file.readline()
+            loci_allel = re.compile("(\D+\d+)_(\d+)")
+            i = 0
+            for line in result_file:
+                i += 1
+                data = line.rstrip().split("\t")
+                loci_allel_object = loci_allel.search(line)
+                locus = loci_allel_object.group(1)
+                allel = loci_allel_object.group(2)
+#                if i < 10:
+#                    print(locus, allel)
+                q_score = float(data[6])
+                if locus in matrix:
+                    if matrix[locus][1] < q_score:
+                        matrix[locus] = [allel, q_score]
+                else:
+                    matrix[locus] = [allel, q_score]
+        return matrix
 
-
-class AlleleMatrix():
-
-    def __init__(self, gene_list, output, kma_object, python2_path="python"):
-        """
-        """
-        eprint("Creating AlleleMatrix")
-        self.output = output
-        self.kma = kma_object
-
-        # Check external script file
-        script = (os.path.dirname(os.path.realpath(__file__))
-                  + "/scripts/Listeria_cgMLST_matrix_ver01_May17.py")
-        if(not os.path.isfile(script)):
-            eprint("ERROR: Something is wrong with your installation.\n"
-                   "File missing: " + script)
-            quit(1)
-
-        # Calculate best hits if needed
-        if(kma_object.cgmlst_file is None):
-            eprint("Cond: Allele calc best hits")
-            kma_object.calc_best_hits()
-
-        # Build script command list
-        cmd = [python2_path, script, gene_list, output, kma_object.cgmlst_file]
-        subprocess.call(cmd)
-
-# @staticmethod -> TypeError: 'staticmethod' object is not callable
-#@staticmethod
 def st_typing(pickle_path, inp, output_file):
-    eprint("Finding ST type")
+    eprint("Finding ST type!!!")
     # Load pickle
     try:
         loci_allel_dict = pickle.load(open(pickle_path, "rb"))
@@ -100,25 +84,22 @@ def st_typing(pickle_path, inp, output_file):
         sys.stdout.write("Error, pickle not found", pickle_path)
         quit(1)
 
-    # Write header in output file
-    output = ("Sample_Names\tcgST_Assigned\tNo_of_Allels_Found\t"
-              "Similarity\n")
-
-    inp = inp.strip().split("\n")
-
+    st_output = ""
     # Find best ST type for all allel profiles
 
     # First line contains matrix column headers, which are the specific loci
     loci = inp[0].strip().split("\t")
-
+    print(len(inp))
     for sample_str in inp[1:]:
         sample = sample_str.strip().split("\t")
         sample_name = sample[0]
         st_hits = []
+        print(len(sample))
         for i in range(1, len(sample)):
             allel = sample[i]
             locus = loci[i]
-
+            if i%50 == 0: 
+                print(i, allel, locus)
             # Loci/Allel combination may not be found in the large profile file
             st_hits += loci_allel_dict[locus].get(allel, ["None"])
 
@@ -136,14 +117,12 @@ def st_typing(pickle_path, inp, output_file):
                 score[hit] = 1
 
         # Prepare output string
-        output += (sample_name + "\t" + str(best_hit) + "\t" + str(max_count)
-                   + "\t" + str(round((max_count / (len(loci) - 1)) * 100, 2))
-                   + "\n")
- 
-    with open(args.st_output, "w") as fh:
-        fh.write(output)
-
-
+        st_output += "%s\t%s\t%d\t%f\n"%(sample_name, str(best_hit), max_count, round((max_count / (len(loci) - 1)) * 100, 2))
+        #st_output += sample_name + "\t" + str(best_hit) + "\t" + str(max_count)
+        #           + "\t" + str(round((max_count / (len(loci) - 1)) * 100, 2))
+        #           + "\n"
+    return st_output
+	
 
 if __name__ == '__main__':
 
@@ -153,7 +132,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="")
     # Posotional arguments
     parser.add_argument("input",
-                        help="FASTQ files to do cgMLST on.",
+                        help="FASTQ files to do cgMLST or wgMLST on.",
                         nargs="+",
                         metavar="FASTQ",
                         default=None)
@@ -162,13 +141,13 @@ if __name__ == '__main__':
                         help="Output file.",
                         default="AlleleMatrix.mat",
                         metavar="OUTPUT_FILE")
-    parser.add_argument("-s", "--species",
-                        help="Species scheme to apply.",
+    parser.add_argument("-s", "--species_scheme",
+                        help="species_scheme scheme to apply e.g. ecoli_MLST.",
                         default=None,
-                        metavar="SPECIES")
+                        metavar="species_scheme")
     parser.add_argument("-db", "--databases",
                         help="Directory containing the databases and gene\
-                              lists for each species.",
+                              lists for each species_scheme.",
                         default=("/home/data1/services/cgMLSTFinder/"
                                  "database_cgs"),
                         metavar="DB_DIR")
@@ -205,13 +184,15 @@ if __name__ == '__main__':
     # Get external software dependencies
     prgs = Dependencies(args.config)
 
-    # Species database
-    db_dir = args.databases + "/" + args.species
-    db_species = db_dir + "/" + args.species
+    # species_scheme database
+    species_scheme = args.species_scheme
+    db_dir = args.databases + "/" + species_scheme
+    db_species_scheme = db_dir + "/" + species_scheme
 
     # Test if database is found and indexed
-    db_files = [args.species + ".b", args.species + ".length.b",
-                args.species + ".name.b"]
+    db_files = [species_scheme + ".b", species_scheme + ".length.b",
+                species_scheme + ".name.b", species_scheme + ".align.b"]
+
     for db_file in db_files:
         if(not os.path.isfile(db_dir + "/" + db_file)):
             eprint("ERROR: A KMA index file seems to be missing from the"
@@ -220,51 +201,68 @@ if __name__ == '__main__':
             quit(1)
 
     # Gene list
-    gene_list_file = (db_dir + "/" + "list_genes.txt")
+    gene_list_filename = (db_dir + "/" + "list_genes.txt")
 
-    if(not os.path.isfile(gene_list_file)):
-        eprint("Gene list not found at expected location:", gene_list_file)
+    if(not os.path.isfile(gene_list_filename)):
+        eprint("Gene list not found at expected location:", gene_list_filename)
         quit(1)
 
     # Load files and pair them if necessary
     eprint("Parsing files:" + str(args.input))
     files = SeqFile.parse_files(args.input, phred=33)
 
-    matrices = []
+    # Get gene_list.txt into list
+    gene_list = []
+    try:
+        gene_list_file = open(gene_list_filename, "r")
+    except IOError:
+        eprint("NO valid genefile found")
+        sys.exit(-1)
+    gene_list = [locus.strip() for locus in  gene_list_file.readlines()]
+    #print(gene_list[:10])
+    gene_list_file.close()
+    
+    eprint("Creating AlleleMatrix")
 
+    # Write header to output file
+    output = ["Genome\t%s" %("\t".join(gene_list))]
+    file_no = 0
     for seqfile in files:
         # Run KMA to find alleles
-        seq_kma = KMA(seqfile=seqfile, tmp_dir=args.tmp_dir, db=db_species,
+        seq_kma = KMA(seqfile=seqfile, tmp_dir=args.tmp_dir, db=db_species_scheme,
                       gene_list=gene_list_file, kma_path=prgs["kma"])
         eprint("Finished KMA for: " + seq_kma.seqfile.filename)
 
-        # Create allele matrix
-        matrix = AlleleMatrix(gene_list=gene_list_file,
-                              output=(args.tmp_dir + "/cgMLST_"
-                                      + seqfile.filename + ".mat"),
-                              kma_object=seq_kma,
-                              python2_path=prgs["python2.7"])
-        eprint("Finished allele matrix for: " + seq_kma.seqfile.filename)
-        matrices.append(matrix)
+        # Get called alleles
+        best_alleles = seq_kma.calc_best_hits()
+        # Prepare output string
+        output_str = args.input[file_no]
+        for locus in gene_list:
+            locus = locus.strip()
+            if locus in best_alleles:
+                 output_str += "\t%s" %(best_alleles[locus][0])
+            else:
+                 output_str += "\tN"
+        output += [output_str]
+        file_no += 1
 
-    output_str = ""
-    header = ""
-    for matrix in matrices:
-        with open(matrix.output, "r") as fh:
-            header = fh.readline()
-            line = fh.readline()
-        output_str += line
+        # create st-type file if pickle containing profile list excist
+        
+        pickle_path = db_dir + "/%s_profile.p"%(species_scheme)
+        print(pickle_path)
+        if os.path.isfile(pickle_path):
+	    # Write header in output file
+            st_output = ("Sample_Names\tcgST_Assigned\tNo_of_Allels_Found\tSimilarity\n")
+            st_output += st_typing(pickle_path, output, args.st_output)
 
-    output_str = header + output_str
+        else:
+            args.st_output = None 
 
+    # write output file(s)
     with open(args.output, "w") as fh:
-        fh.write(output_str)
+        fh.write("\n".join(output) + "\n")
 
-    # create st-type file if pickle containing profile list excist
-    pickle_path = db_dir + "/cgMLST_profile.p"
     if os.path.isfile(pickle_path):
-        st_typing(pickle_path, output_str, args.st_output)
-    else:
-        args.st_output = None
-
+        with open(args.st_output, "w") as fh:
+            fh.write(st_output)
     eprint("Done")
