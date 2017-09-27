@@ -36,9 +36,9 @@ class KMA():
 
         kma_call_list += [
             "-t_db", args.databases + "/" + species+ "/" + species,
-            "-mem_mode",
-            "-delta", "1023",
-            "-o", result_file_tmp]
+            "-mem_mode"] #,
+            #"-delta", "1023",
+            #"-o", result_file_tmp]
 
         eprint("# KMA call: " + " ".join(kma_call_list))
 
