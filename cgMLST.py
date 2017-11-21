@@ -117,20 +117,13 @@ def st_typing(pickle_path, inp, output_file):
                 score[hit] = 1
 
         # Prepare output string
-<<<<<<< HEAD
+
         st_output += "%s\t%s\t%d\t%f\n"%(sample_name, str(best_hit), max_count, round((max_count / (len(loci) - 1)) * 100, 2))
         #st_output += sample_name + "\t" + str(best_hit) + "\t" + str(max_count)
         #           + "\t" + str(round((max_count / (len(loci) - 1)) * 100, 2))
         #           + "\n"
     return st_output
 	
-=======
-        output += (sample_name + "\t" + str(best_hit) + "\t" + str(max_count)
-                   + "\t" + str(round((max_count / (len(loci) - 1)) * 100, 2))
-                   + "\n")
-    return output
-
->>>>>>> STtyping_dev
 
 if __name__ == '__main__':
 
@@ -234,7 +227,7 @@ if __name__ == '__main__':
 
     # Write header to output file
     output = ["Genome\t%s" %("\t".join(gene_list))]
-    st_output = ("Sample_Names\tcgST_Assigned\tNo_of_Allels_Found\tSimilarity\n")
+    st_output = "Sample_Names\tcgST_Assigned\tNo_of_Allels_Found\tSimilarity\n"
 
     for seqfile in files:
         # Run KMA to find alleles
@@ -244,13 +237,10 @@ if __name__ == '__main__':
 
         # Get called alleles
         best_alleles = seq_kma.calc_best_hits()
-<<<<<<< HEAD
-        # Prepare output string
-        output_str = args.input[file_no]
-=======
+
         # prepare output string
         output_str = seqfile.filename 
->>>>>>> STtyping_dev
+
         for locus in gene_list:
             locus = locus.strip()
             if locus in best_alleles:
@@ -258,24 +248,14 @@ if __name__ == '__main__':
             else:
                  output_str += "\tN"
         output += [output_str]
-<<<<<<< HEAD
-        file_no += 1
-=======
->>>>>>> STtyping_dev
 
         # create st-type file if pickle containing profile list excist
         
         pickle_path = db_dir + "/%s_profile.p"%(species_scheme)
         print(pickle_path)
         if os.path.isfile(pickle_path):
-<<<<<<< HEAD
-	    # Write header in output file
-            st_output = ("Sample_Names\tcgST_Assigned\tNo_of_Allels_Found\tSimilarity\n")
-=======
 	    # Write output string to st outfile
->>>>>>> STtyping_dev
             st_output += st_typing(pickle_path, output, args.st_output)
-
         else:
             args.st_output = None 
 
