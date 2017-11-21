@@ -36,10 +36,10 @@ class KMA():
 
         kma_call_list += [
             "-o", result_file_tmp,
-	    "-t_db", args.databases + "/" + species_scheme+ "/" + species_scheme,
-            "-mem_mode"]#,
-	    #"-SW",
-            #"-delta", "1023"]
+            "-t_db", args.databases + "/" + species_scheme+ "/" + species_scheme,
+            "-mem_mode",
+            "-SW",
+            "-delta", "1023"]
 
         eprint("# KMA call: " + " ".join(kma_call_list))
         #os.system(" ".join(kma_call_list))
@@ -57,7 +57,7 @@ class KMA():
         # Create dict of locus and allel with the highest quality score
         with open(self.result_file, "r") as result_file:
             header = result_file.readline()
-            loci_allel = re.compile("(\D+\d+)_(\d+)")
+            loci_allel = re.compile(r"(\S+)_(\d+)")
             i = 0
             for line in result_file:
                 i += 1
@@ -117,16 +117,14 @@ def st_typing(pickle_path, inp, output_file):
                 score[hit] = 1
 
         # Prepare output string
-
         st_output += "%s\t%s\t%d\t%f\n"%(sample_name, str(best_hit), max_count, round((max_count / (len(loci) - 1)) * 100, 2))
+
         #st_output += sample_name + "\t" + str(best_hit) + "\t" + str(max_count)
         #           + "\t" + str(round((max_count / (len(loci) - 1)) * 100, 2))
         #           + "\n"
     return st_output
-	
 
 if __name__ == '__main__':
-
     #
     # Handling arguments
     #
@@ -222,12 +220,13 @@ if __name__ == '__main__':
     gene_list = [locus.strip() for locus in  gene_list_file.readlines()]
     #print(gene_list[:10])
     gene_list_file.close()
-    
+
     eprint("Creating AlleleMatrix")
 
     # Write header to output file
     output = ["Genome\t%s" %("\t".join(gene_list))]
     st_output = "Sample_Names\tcgST_Assigned\tNo_of_Allels_Found\tSimilarity\n"
+    pickle_path = db_dir + "/%s_profile.p"%(species_scheme)
 
     for seqfile in files:
         # Run KMA to find alleles
@@ -238,8 +237,8 @@ if __name__ == '__main__':
         # Get called alleles
         best_alleles = seq_kma.calc_best_hits()
 
-        # prepare output string
-        output_str = seqfile.filename 
+        # Prepare output string
+        output_str = seqfile.filename
 
         for locus in gene_list:
             locus = locus.strip()
@@ -250,11 +249,9 @@ if __name__ == '__main__':
         output += [output_str]
 
         # create st-type file if pickle containing profile list excist
-        
-        pickle_path = db_dir + "/%s_profile.p"%(species_scheme)
-        print(pickle_path)
+        # print(pickle_path)
         if os.path.isfile(pickle_path):
-	    # Write output string to st outfile
+            # Write output string to st outfile
             st_output += st_typing(pickle_path, output, args.st_output)
         else:
             args.st_output = None 
