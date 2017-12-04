@@ -1,0 +1,4 @@
+# Configuration file for cgMLSTFinder
+# Host: docker
+kma	/usr/src/kma
+python2.7 /opt/conda/bin/python
