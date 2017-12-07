@@ -4,7 +4,7 @@
 ############################################################
 
 # Set base image to Python Anaconda
-FROM continuumio/anaconda
+FROM continuumio/anaconda3
 
 # File Author / Maintainer
 MAINTAINER Jose Luis Bellod Cisneros
@@ -60,14 +60,23 @@ RUN chmod 777 -R /tmp && chmod o+t -R /tmp
 #################################################
 
 # Install kma #
+
 RUN git clone "https://bitbucket.org/genomicepidemiology/kma.git" /usr/src/kma
+WORKDIR /usr/src/kma
+RUN gcc -O3 -o kma KMA.c -lm
+RUN gcc -O3 -o kma_index KMA_index.c
+RUN gcc -O3 -o kma_shm KMA_SHM.c
+WORKDIR /usr/src/
 
 # Download services
 RUN git clone --recursive  "https://bitbucket.org/genomicepidemiology/cgmlstfinder.git" /usr/src/cgmlstfinder
-RUN find -type f -iname "*.py" -print -exec chmod 775 {} \;
+RUN find -type f -iname "/usr/src/cgmlstfinder/*.py" -print -exec chmod 775 {} \;
+RUN touch /usr/src/cgmlstfinder/python_module_dependencies/__init__.py
+RUN touch /usr/src/cgmlstfinder/python_module_seqfilehandler/__init__.py
 
 # Add service scripts to path
 ENV PATH $PATH:/usr/src/cgmlstfinder
+ENV PATH $PATH:/usr/src/kma
 ENV PATH $PATH:/opt/conda/bin
 
 # Set convinience aliases

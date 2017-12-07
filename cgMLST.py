@@ -1,4 +1,4 @@
-#!/home/data1/tools/bin/Anaconda3-2.5.0/bin/python cgMLST.py
+#!/usr/bin/env python
 
 from __future__ import print_function
 import os
@@ -222,12 +222,12 @@ if __name__ == '__main__':
     gene_list_file.close()
 
     eprint("Creating AlleleMatrix")
-
     # Write header to output file
     output = ["Genome\t%s" %("\t".join(gene_list))]
     st_output = "Sample_Names\tcgST_Assigned\tNo_of_Allels_Found\tSimilarity\n"
     pickle_path = db_dir + "/%s_profile.p"%(species_scheme)
-
+    
+    
     for seqfile in files:
         # Run KMA to find alleles
         seq_kma = KMA(seqfile=seqfile, tmp_dir=args.tmp_dir, db=db_species_scheme,
