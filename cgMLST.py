@@ -42,7 +42,8 @@ class KMA():
             "-boot",
             "-1t1",
             "-mrs 0.5"]
-
+        
+        print(kma_call_list)
         eprint("# KMA call: " + " ".join(kma_call_list))
         #os.system(" ".join(kma_call_list))
         process = subprocess.Popen(kma_call_list, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
