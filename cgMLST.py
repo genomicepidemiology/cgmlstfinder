@@ -38,8 +38,10 @@ class KMA():
             "-o", result_file_tmp,
             "-t_db", args.databases + "/" + species_scheme+ "/" + species_scheme,
             "-mem_mode",
-            "-SW",
-            "-delta", "1023"]
+            "-NW",
+            "-boot",
+            "-1t1",
+            "-mrs 0.5"]
 
         eprint("# KMA call: " + " ".join(kma_call_list))
         #os.system(" ".join(kma_call_list))
