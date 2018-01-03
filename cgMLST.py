@@ -43,7 +43,8 @@ class KMA():
 
         eprint("# KMA call: " + " ".join(kma_call_list))
         #os.system(" ".join(kma_call_list))
-        subprocess.call(kma_call_list)
+        process = subprocess.Popen(kma_call_list, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        out, err = process.communicate()
         eprint("KMA call ended")
 
 
