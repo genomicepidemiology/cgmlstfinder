@@ -1,4 +1,3 @@
 # Configuration file for cgMLSTFinder
 # Host: cgebase
-kma	/home/data1/tools/bin/kma
-python2.7 /home/data1/tools/bin/anaconda2-2.4.1/bin/python
+kma	/Users/rosa/Documents/CGE/BitBucket/kma/kma

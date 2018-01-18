@@ -1,4 +1,5 @@
 #!/usr/bin/env python3 
+
 from __future__ import print_function
 import os
 import sys
@@ -260,6 +261,7 @@ if __name__ == '__main__':
 
     # Load ST-dict pickle
     pickle_path = db_dir + "/%s_profile.p"%(species_scheme)
+
     T0 = time.time()
     if os.path.isfile(pickle_path):
         try:
