@@ -1,3 +1,0 @@
-# Configuration file for cgMLSTFinder
-# Host: cgebase
-kma	/Users/rosa/Documents/CGE/BitBucket/kma/kma

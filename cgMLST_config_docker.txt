@@ -1,3 +1,0 @@
-# Configuration file for cgMLSTFinder
-# Host: docker
-kma	/usr/src/kma/kma
