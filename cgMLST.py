@@ -432,7 +432,7 @@ class KMA():
         kma_call_list += [
             "-o", result_file_tmp,
             "-t_db", db,
-            "-mem_mode", "-dense", "-boot", "-1t1"]
+            "-mem_mode", "-dense", "-boot", "-1t1", "-and"]
 
         # Call kma externally
         eprint("# KMA call: " + " ".join(kma_call_list))
@@ -498,8 +498,8 @@ def st_typing(pickle_path, inp):
         sample_name = sample[0]
         st_hits = []
         for i in range(1, len(sample)):
-            allel = sample[i]
-            locus = loci[i]
+            allel = sample[i].encode('utf-8')
+            locus = loci[i].encode('utf-8')
             # Loci/Allel combination may not be found in the large profile file
             st_hits += loci_allel_dict[locus].get(allel, ["None"])
 
@@ -518,7 +518,7 @@ def st_typing(pickle_path, inp):
 
         # Prepare output string
         similarity = round(max_count/(len(loci) - 1)*100, 2)
-        st_output += "%s\t%s\t%d\t%.2f\n"%(sample_name, best_hit, max_count, similarity)
+        st_output += "%s\t%s\t%d\t%.2f\n"%(sample_name, best_hit.decode("utf-8"), max_count, similarity)
 
     return st_output
 
@@ -577,7 +577,7 @@ if __name__ == '__main__':
                         help="Directory containing the databases and gene\
                               lists for each species_scheme.",
                         default=("/home/data1/services/cgMLSTFinder/"
-                                 "database_cgs"),
+                                 "database_current"),
                         metavar="DB_DIR")
     parser.add_argument("-t", "--tmp_dir",
                         help="Temporary directory for storage of the results\
