@@ -443,16 +443,17 @@ class KMA():
 
     def best_allel_hits(self):
         """ 
-        Extracts best allel hits from kma and returns a list(string) of best
-        allel ordered based on the gene list. 
+        Extracts perfect matching allel hits from kma results file and returns
+        a list(string) found allel profile ordered based on the gene list. 
         """
+
         best_alleles = {}
         
         # Create dict of locus and allel with the highest quality score
         with open(self.result_file, "r") as result_file:
             header = result_file.readline()
             header = header.strip().split("\t")
-            q_val_index = header.index("q_value")
+            template_id_index = header.index("Template_Identity") 
             loci_allel = re.compile(r"(\S+)_(\d+)")
             i = 0
             for line in result_file:
@@ -461,22 +462,19 @@ class KMA():
                 loci_allel_object = loci_allel.search(line)
                 locus = loci_allel_object.group(1)
                 allel = loci_allel_object.group(2)
-                q_score = float(data[q_val_index])
-                if locus in best_alleles:
-                    # Check if allel has a higher q_score than the saved allel
-                    if best_alleles[locus][1] < q_score:
-                        best_alleles[locus] = [allel, q_score]
-                else:
-                    best_alleles[locus] = [allel, q_score]
+                template_id = float(data[template_id_index])
+                # Check for perfect matches
+                if template_id == 100:
+                    best_alleles[locus] = allel
 
         # Get called alleles
         allel_str = self.filename
         for locus in gene_list:
             locus = locus.strip()
             if locus in best_alleles:
-                 allel_str += "\t%s" %(best_alleles[locus][0])
+                 allel_str += "\t%s" %(best_alleles[locus])
             else:
-                 allel_str += "\tN"
+                 allel_str += "\tNaN"
         return [allel_str]
 
 
@@ -506,7 +504,7 @@ def st_typing(pickle_path, inp):
         # Find most frequent st_type in st_hits
         score = {}
         max_count = 1
-        best_hit = ""
+        best_hit = b""
         for hit in st_hits:
             if hit in score:
                 score[hit] += 1
@@ -519,6 +517,7 @@ def st_typing(pickle_path, inp):
         # Prepare output string
         similarity = round(max_count/(len(loci) - 1)*100, 2)
         st_output += "%s\t%s\t%d\t%.2f\n"%(sample_name, best_hit.decode("utf-8"), max_count, similarity)
+        #st_output += "%s\t%s\t%d\t%.2f\n"%(sample_name, best_hit, max_count, similarity)
 
     return st_output
 
@@ -560,7 +559,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="")
     # Posotional arguments
     parser.add_argument("input",
-                        help="FASTQ files to do cgMLST or wgMLST on.",
+                        help="FASTQ files to do cgMLST on.",
                         nargs="+",
                         metavar="FASTQ",
                         default=None)
@@ -570,9 +569,11 @@ if __name__ == '__main__':
                         default="AlleleMatrix.mat",
                         metavar="OUTPUT_FILE")
     parser.add_argument("-s", "--species_scheme",
-                        help="species_scheme scheme to apply e.g. ecoli_MLST.",
+                        help="species schemes to apply, e.g. ecoli_cgMLST. Must match the name of the species database",
+                        #choices=['ecoli_cgMLST', 'yersinia_cgMLST', 'campy_cgMLST', 
+                        #         'salmonella_cgMLST_v2', 'listeria_cgMLST'],
                         default=None,
-                        metavar="species_scheme")
+                        metavar="SPECIES_SCHEME")
     parser.add_argument("-db", "--databases",
                         help="Directory containing the databases and gene\
                               lists for each species_scheme.",
@@ -583,10 +584,10 @@ if __name__ == '__main__':
                         help="Temporary directory for storage of the results\
                               from the external software.",
                         default="cgMLST_tmp_dir")
-    parser.add_argument("--kmapath",
+    parser.add_argument("-k", "--kmapath",
                         help="Path to executable kma program",
                         default="kma",
-                        metavar="kmapath")
+                        metavar="KMA_PATH")
 
     args = parser.parse_args()
 
@@ -683,6 +684,7 @@ if __name__ == '__main__':
         # Write ST-type output
         with open(st_filename, "w") as fh:
             fh.write(st_output)
+        print(st_output)
 
     # Write allel matrix output
     with open(args.output + ".txt", "w") as fh:
