@@ -503,7 +503,7 @@ def st_typing(pickle_path, inp):
 
         # Find most frequent st_type in st_hits
         score = {}
-        max_count = 1
+        max_count = 0
         best_hit = b""
         for hit in st_hits:
             if hit in score:
