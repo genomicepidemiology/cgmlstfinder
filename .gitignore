@@ -2,3 +2,5 @@
 output
 *.gz
 config_prg.txt
+test
+*~

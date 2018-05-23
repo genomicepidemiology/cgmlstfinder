@@ -533,12 +533,12 @@ def file_format(input_files):
     invalid_files = []
     # Open all input files and get the first character
     for infile in input_files:
-        if infile[-3:] == ".gz":
-            f = gzip.open(infile, "rb")
-            fst_char = f.read(1);
-        else:
+        try:
+            f =  gzip.open(infile, "rb")
+            fst_char = f.read(1)
+        except OSError:
             f = open(infile, "rb")
-            fst_char = f.read(1);
+            fst_char = f.read(1)
         f.close()
         #fst_char = f.readline().decode("ascii")[0]
         #print(fst_char)
