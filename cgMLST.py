@@ -1,5 +1,5 @@
 #!/usr/bin/env python3 
-import os, sys, shutil, argparse, subprocess, pickle, re, gzip, time
+import os, sys, shutil, argparse, subprocess, pickle, re, gzip, time, hashlib, pprint
 from difflib import ndiff
 
 def eprint(*args, **kwargs):
@@ -427,16 +427,19 @@ class KMA():
         result_file_tmp = tmp_dir + "/kma_" + filename
         self.filename = filename
         self.result_file = result_file_tmp + ".res"
+        self.alignm_file = result_file_tmp + ".aln"
+#        self.result_file = tmp_dir + "/SRR1106444.res"
+#        self.alignm_file = tmp_dir + "/SRR1106444.aln"
         self.seqfile = seqfile
 
         kma_call_list += [
             "-o", result_file_tmp,
             "-t_db", db,
-            "-mem_mode", "-dense", "-boot", "-1t1", "-and"]
+            "-mem_mode", "-dense", "-boot", "-1t1"]
 
         # Call kma externally
         eprint("# KMA call: " + " ".join(kma_call_list))
-        process = subprocess.Popen(kma_call_list, shell=False, stdout=subprocess.PIPE) #, stderr=subprocess.PIPE)
+        process = subprocess.Popen(kma_call_list, shell=False, stdout=subprocess.PIPE)
         out, err = process.communicate()
         eprint("KMA call ended")
 
@@ -467,58 +470,66 @@ class KMA():
                 if template_id == 100:
                     best_alleles[locus] = allel
 
+        # Get list of best_alleles
+        best_alleles_lst = []
+            
         # Get called alleles
         allel_str = self.filename
+        allel_md5_str = self.filename
         for locus in gene_list:
-            locus = locus.strip()
             if locus in best_alleles:
+                 allele_id = locus + "_" + best_alleles[locus]
+                 best_alleles_lst.append(allele_id)
                  allel_str += "\t%s" %(best_alleles[locus])
             else:
                  allel_str += "\tNaN"
-        return [allel_str]
+        allele_fasta_hits = {}
+
+        # Get allele fasta sequences 
+        with open(self.alignm_file, "r") as align_file:
+            get_seq = "False"
+            for line in align_file:
+                line = line.rstrip()
+                if line.startswith("#"):
+                    get_seq = "False"
+                    # Check locus allele
+                    allele_id = line.strip(" #")
+                    loci_allel_object = loci_allel.search(line)
+                    locus = loci_allel_object.group(1)
+                    if allele_id in best_alleles_lst:
+                        get_seq = True
+                        allele_fasta_hits[locus] = ""
+                if get_seq == True:
+                    if line.startswith("query"):
+                        allele_fasta_hits[locus] += line.split("\t")[-1].strip().upper().replace("-", "")
+
+        # Calculate md5        
+        for locus in gene_list:
+            try:
+                byte_seq = bytes(allele_fasta_hits[locus],'utf-8')
+
+                md5 = hashlib.md5(byte_seq).hexdigest()
+
+                allel_md5_str += "\t{}".format(md5)
+            except KeyError:
+                allel_md5_str += "\t{}".format("NaN")
+           
+        return [allel_md5_str]
 
 
-def st_typing(pickle_path, inp):
-    """
-    Takes the path to a pickled dictionary, the inp list of the allel 
-    number that each loci has been assigned, and an output file string
-    where the found st type and similaity is written into it.  
-    """
-
-    # Find best ST type for all allel profiles
+def sum_md5(md5_result_list):
+    header = md5_result_list[0]
     st_output = ""
-
-    # First line contains matrix column headers, which are the specific loci
-    loci = inp[0].strip().split("\t")
-
-    for sample_str in inp[1:]:
-        sample = sample_str.strip().split("\t")
-        sample_name = sample[0]
-        st_hits = []
-        for i in range(1, len(sample)):
-            allel = sample[i].encode('utf-8')
-            locus = loci[i].encode('utf-8')
-            # Loci/Allel combination may not be found in the large profile file
-            st_hits += loci_allel_dict[locus].get(allel, ["None"])
-
-        # Find most frequent st_type in st_hits
-        score = {}
-        max_count = 0
-        best_hit = b""
-        for hit in st_hits:
-            if hit in score:
-                score[hit] += 1
-                if max_count < score[hit]:
-                    max_count = score[hit]
-                    best_hit = hit
-            elif(hit is not "None"):
-                score[hit] = 1
-
-        # Prepare output string
-        similarity = round(max_count/(len(loci) - 1)*100, 2)
-        st_output += "%s\t%s\t%d\t%.2f\n"%(sample_name, best_hit.decode("utf-8"), max_count, similarity)
-        #st_output += "%s\t%s\t%d\t%.2f\n"%(sample_name, best_hit, max_count, similarity)
-
+    sum_of_md5sums = 0
+    for line in md5_result_list[1:]:
+        sample_name = line.split("\t")[0]
+        for md5 in line.split("\t")[1:]:
+            if md5 == "NaN":
+                sum_of_md5sums += 0
+            else:
+                sum_of_md5sums += int(md5, 16)
+            
+        st_output += "{}\t{}\n".format(sample_name, sum_of_md5sums)
     return st_output
 
 
@@ -608,16 +619,13 @@ if __name__ == '__main__':
     kma_path = args.kmapath
 
     # Test if database is found and indexed (works for both kma-1.0 and kma-2.0)
-    db_files = [species_scheme + ".length.b"]#,
-                #species_scheme + ".name", species_scheme + ".index.b", 
-                #species_scheme + ".seq.b", species_scheme + ".comp.b" ]
+    db_file = species_scheme + ".length.b"
 
-    for db_file in db_files:
-        if(not os.path.isfile(db_dir + "/" + db_file)):
-            eprint("ERROR: A KMA index file seems to be missing from the"
-                   "database directory. You may need to run kma_index.\n"
-                   "Missing file: " + db_dir + "/" + db_file)
-            quit(1)
+    if(not os.path.isfile(db_dir + "/" + db_file)):
+        eprint("ERROR: A KMA index file seems to be missing from the"
+               "database directory. You may need to run kma_index.\n"
+               "Missing file: " + db_dir + "/" + db_file)
+        quit(1)
 
     # Gene list
     gene_list_filename = (db_dir + "/list_genes.txt")
@@ -648,20 +656,7 @@ if __name__ == '__main__':
 
     # Write header to output file
     allel_output = ["Genome\t%s" %("\t".join(gene_list))]
-    st_output = "Sample_Names\tcgST_Assigned\tNo_of_Allels_Found\tSimilarity\n"
-
-    # Load ST-dict pickle
-    pickle_path = db_dir + "/%s_profile.p"%(species_scheme)
-
-    T0 = time.time()
-    if os.path.isfile(pickle_path):
-        try:
-            loci_allel_dict = pickle.load(open(pickle_path, "rb"))
-            T1 = time.time()
-            eprint("pickle_loaded: %d s"%(int(T1-T0)) )
-        except IOError:
-            sys.stdout.write("Error, pickle not found", pickle_path)
-            quit(1)
+    st_output = "Sample_Names\tsum_of_md5sums\n"
 
     for seqfile in fasta_files:
         # Run KMA to find alleles from fasta file
@@ -677,14 +672,11 @@ if __name__ == '__main__':
 
     # Create ST-type file if pickle containing profile list exist   
     st_filename = args.output + "-st.txt"
-    if os.path.isfile(pickle_path):
-        # Write header in output file
-        st_output += st_typing(loci_allel_dict, allel_output)
-
-        # Write ST-type output
-        with open(st_filename, "w") as fh:
-            fh.write(st_output)
-        print(st_output)
+    st_output += sum_md5(allel_output)
+    # Write ST-type output
+    with open(st_filename, "w") as fh:
+        fh.write(st_output)
+    print(st_output)
 
     # Write allel matrix output
     with open(args.output + ".txt", "w") as fh:
