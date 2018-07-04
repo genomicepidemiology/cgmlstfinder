@@ -135,6 +135,9 @@ os.system(rm_cmd)
 if os.listdir("tmp") == []: 
     os.rmdir("tmp")
 
+with open(newick_file, "w") as nf:
+    print(tree.write(), file=nf)
+
 #print(tree)
 
 print("Done")
