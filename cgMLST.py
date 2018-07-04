@@ -588,6 +588,9 @@ if __name__ == '__main__':
                         help="Path to executable kma program",
                         default="kma",
                         metavar="KMA_PATH")
+    parser.add_argument("-n", "--nj_path",
+                        help="Path to executable neighbor joining program",
+                        metavar="NJ_PATH")
 
     args = parser.parse_args()
 
@@ -687,7 +690,20 @@ if __name__ == '__main__':
         print(st_output)
 
     # Write allel matrix output
-    with open(args.output + ".txt", "w") as fh:
+    allele_matrix = args.output + ".txt"
+    with open(allele_matrix, "w") as fh:
         fh.write("\n".join(allel_output) + "\n")
 
+
+    # TODO, TEST! 
+    # NEW FEATURE, NOT TESTED
+    # Create tree if neighbor parameter was sat
+    if args.nj_path:
+        # Check that more than 2 + header samples are included in the analysis
+        if len(allel_output) > 3:
+            outdir = os.path.dirname(output)
+            proc = subprocess.Popen("make_nj_tree.py -i {} -o {} -n {}".format(allele_matrix, outdir, nj_path), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            out, err = proc.communicate()
+            if "Done" not in out:
+                print("No neighbor joining tree was created. The neighbor program responded with this: {}".format(err))                
     eprint("Done")
