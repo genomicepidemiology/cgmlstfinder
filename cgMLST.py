@@ -1,5 +1,6 @@
 #!/usr/bin/env python3 
 import os, sys, shutil, argparse, subprocess, pickle, re, gzip, time
+from ete3 import Tree
 from difflib import ndiff
 
 def eprint(*args, **kwargs):
@@ -564,11 +565,11 @@ if __name__ == '__main__':
                         metavar="FASTQ",
                         default=None)
     # Optional arguments
-    parser.add_argument("-o", "--output",
+    parser.add_argument("-o", "--outdir",
                         help="Output file.",
                         default="AlleleMatrix.mat",
                         metavar="OUTPUT_FILE")
-    parser.add_argument("-s", "--species_scheme",
+    parser.add_argument("-s", "--species",
                         help="species schemes to apply, e.g. ecoli_cgMLST. Must match the name of the species database",
                         #choices=['ecoli_cgMLST', 'yersinia_cgMLST', 'campy_cgMLST', 
                         #         'salmonella_cgMLST_v2', 'listeria_cgMLST'],
@@ -594,14 +595,19 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    # Handle tmp dir
-    args.tmp_dir = os.path.abspath(args.tmp_dir)
-    os.makedirs(args.tmp_dir, exist_ok=True)
+    if args.outdir:
+        outdir = os.path.abspath(args.outdir)
+        if not os.path.exists(args.outdir):
+            sys.exit("Output directory '{}' does not exist".format(outdir))
+    else:
+       args.outdir = os.getcwd()
 
-    # Species scheme database
-    species_scheme = args.species_scheme
-    db_dir = args.databases + "/" + species_scheme
-    db_species_scheme = db_dir + "/" + species_scheme
+    if args.tmp_dir:
+        tmp_dir = os.path.abspath(args.tmp_dir)
+        if not os.path.exists(tmp_dir):
+            sys.exit("Temperary directory '{}' does not exist".format(tmp_dir))
+    else:
+        tmp_dir = outdir
 
     # Check kma path
     if shutil.which(args.kmapath) is None:
@@ -610,10 +616,13 @@ if __name__ == '__main__':
         quit(1)
     kma_path = args.kmapath
 
+    # Species scheme database
+    species = args.species
+    db_dir = args.databases + "/" + species
+    db_species_scheme = db_dir + "/" + species
+
     # Test if database is found and indexed (works for both kma-1.0 and kma-2.0)
-    db_files = [species_scheme + ".length.b"]#,
-                #species_scheme + ".name", species_scheme + ".index.b", 
-                #species_scheme + ".seq.b", species_scheme + ".comp.b" ]
+    db_files = [species + ".length.b"]
 
     for db_file in db_files:
         if(not os.path.isfile(db_dir + "/" + db_file)):
@@ -623,21 +632,22 @@ if __name__ == '__main__':
             quit(1)
 
     # Gene list
-    gene_list_filename = (db_dir + "/list_genes.txt")
+    gene_list_filename = (db_dir + "/loci_list.txt")
+
     if(not os.path.isfile(gene_list_filename)):
         eprint("Gene list not found at expected location: %s"%(gene_list_filename))
         quit(1)
 
     # Check file format of input files (fasta or fastq, gz or not gz)
     (fasta_files, fastq_files, invalid_files) = file_format(args.input)
-    eprint("Input files: %d fasta file(s)\n"
-           "             %d fastq file(s)\n"
-           "             %d invalid file(s)"%(len(fasta_files), 
-                                             len(fastq_files), 
+    print("Input files: %d fasta file(s)\n"
+          "             %d fastq file(s)\n"
+          "             %d invalid file(s)"%(len(fasta_files),
+                                             len(fastq_files),
                                              len(invalid_files)))
 
     # Load files and pair them if necessary
-    eprint("Parsing files:" + str(args.input))
+    print("Parsing files:" + str(args.input))
     fastq_files = SeqFile.parse_files(fastq_files, phred=33)
 
     # Get gene_list_file into list
@@ -654,17 +664,17 @@ if __name__ == '__main__':
     st_output = "Sample_Names\tcgST_Assigned\tNo_of_Allels_Found\tSimilarity\n"
 
     # Load ST-dict pickle
-    pickle_path = db_dir + "/%s_profile.p"%(species_scheme)
+    #pickle_path = db_dir + "/%s_profile.p"%(species_scheme)
 
-    T0 = time.time()
-    if os.path.isfile(pickle_path):
-        try:
-            loci_allel_dict = pickle.load(open(pickle_path, "rb"))
-            T1 = time.time()
-            eprint("pickle_loaded: %d s"%(int(T1-T0)) )
-        except IOError:
-            sys.stdout.write("Error, pickle not found", pickle_path)
-            quit(1)
+    #T0 = time.time()
+    #if os.path.isfile(pickle_path):
+    #    try:
+    #        loci_allel_dict = pickle.load(open(pickle_path, "rb"))
+    #        T1 = time.time()
+    #        eprint("pickle_loaded: %d s"%(int(T1-T0)) )
+    #    except IOError:
+    #        sys.stdout.write("Error, pickle not found", pickle_path)
+    #        quit(1)
 
     for seqfile in fasta_files:
         # Run KMA to find alleles from fasta file
@@ -679,31 +689,39 @@ if __name__ == '__main__':
         allel_output += seq_kma.best_allel_hits()
 
     # Create ST-type file if pickle containing profile list exist   
-    st_filename = args.output + "-st.txt"
-    if os.path.isfile(pickle_path):
-        # Write header in output file
-        st_output += st_typing(loci_allel_dict, allel_output)
+    st_filename = os.path.join(outdir, species + "_ST_results.txt")
+    #if os.path.isfile(pickle_path):
+    #    # Write header in output file
+    #    st_output += st_typing(loci_allel_dict, allel_output)
 
-        # Write ST-type output
-        with open(st_filename, "w") as fh:
-            fh.write(st_output)
-        print(st_output)
+    #    # Write ST-type output
+    #    with open(st_filename, "w") as fh:
+    #        fh.write(st_output)
+    #    print(st_output)
 
     # Write allel matrix output
-    allele_matrix = args.output + ".txt"
+    allele_matrix = os.path.join(outdir, species + "_results.txt")
     with open(allele_matrix, "w") as fh:
         fh.write("\n".join(allel_output) + "\n")
 
 
-    # TODO, TEST! 
-    # NEW FEATURE, NOT TESTED
     # Create tree if neighbor parameter was sat
     if args.nj_path:
         # Check that more than 2 + header samples are included in the analysis
         if len(allel_output) > 3:
-            outdir = os.path.dirname(output)
-            proc = subprocess.Popen("make_nj_tree.py -i {} -o {} -n {}".format(allele_matrix, outdir, nj_path), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            python_path = sys.executable
+            cmd = "{} make_nj_tree.py -i {} -o {} -n {}".format(python_path, allele_matrix, outdir, args.nj_path)
+            print(cmd)
+            proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             out, err = proc.communicate()
-            if "Done" not in out:
-                print("No neighbor joining tree was created. The neighbor program responded with this: {}".format(err))                
-    eprint("Done")
+            out = out.decode("utf-8")
+            err = err.decode("utf-8")
+
+            if proc.returncode != 0:
+                eprint("No neighbor joining tree was created. The neighbor program responded with this: {}".format(err))
+            else:
+                # print newick
+
+                tr = Tree("{}/allele_tree.newick".format(outdir))
+
+                print(tr.get_ascii())
