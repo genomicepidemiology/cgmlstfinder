@@ -4,5 +4,5 @@
 ```
 #!bash
 
-git clone --recursive https://bitbucket.org/genomicepidemiology/cgmlstfinder.git
+git clone https://bitbucket.org/genomicepidemiology/cgmlstfinder.git
 ```

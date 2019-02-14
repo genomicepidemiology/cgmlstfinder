@@ -413,14 +413,19 @@ class KMA():
         """ Constructor map reads from seqfile object using kma.
         """
         # Create kma command line list
-        kma_call_list = [kma_path, "-i"]
         if fasta == False:
             filename = seqfile.filename
-            kma_call_list.append(seqfile.path)
+
             # Add reverse reads if paired-end data
             if(seqfile.pe_file_reverse):
+                kma_call_list = [kma_path, "-ipe"]
+                kma_call_list.append(seqfile.path)
                 kma_call_list.append(seqfile.pe_file_reverse)
-        else: 
+            else:
+                kma_call_list = [kma_path, "-i"]
+                kma_call_list.append(seqfile.path)
+        else:
+            kma_call_list = [kma_path, "-i"]
             filename = seqfile.split('/')[-1].split('.')[0]
             kma_call_list.append(seqfile)
 
@@ -432,14 +437,13 @@ class KMA():
         kma_call_list += [
             "-o", result_file_tmp,
             "-t_db", db,
-            "-mem_mode", "-dense", "-boot", "-1t1", "-and"]
+            "-mem_mode", "-cge", "-boot", "-1t1", "-and"]
 
         # Call kma externally
         eprint("# KMA call: " + " ".join(kma_call_list))
         process = subprocess.Popen(kma_call_list, shell=False, stdout=subprocess.PIPE) #, stderr=subprocess.PIPE)
         out, err = process.communicate()
         eprint("KMA call ended")
-
 
     def best_allel_hits(self):
         """ 
@@ -453,28 +457,46 @@ class KMA():
         with open(self.result_file, "r") as result_file:
             header = result_file.readline()
             header = header.strip().split("\t")
-            template_id_index = header.index("Template_Identity") 
+
+            depth_index          = header.index("Depth")
+            query_id_index       = header.index("Query_Identity") 
+            template_cover_index = header.index("Template_Coverage")
+            q_val_index          = header.index("q_value")
+
             loci_allel = re.compile(r"(\S+)_(\d+)")
             i = 0
+            found_loci = []
             for line in result_file:
                 i += 1
                 data = line.rstrip().split("\t")
                 loci_allel_object = loci_allel.search(line)
                 locus = loci_allel_object.group(1)
                 allel = loci_allel_object.group(2)
-                template_id = float(data[template_id_index])
-                # Check for perfect matches
-                if template_id == 100:
-                    best_alleles[locus] = allel
+
+                q_score = float(data[q_val_index])
+                template_cover = float(data[template_cover_index])
+                query_id = float(data[query_id_index])
+                depth = float(data[depth_index])
+
+                found_loci.append(locus)
+                if query_id == 100 and template_cover == 100:
+                    # Check if allel has a higher q_score than the saved allel
+                    if locus in best_alleles:
+                        if best_alleles[locus][3] < depth:
+                            best_alleles[locus] = [allel, q_score, template_cover, depth]
+                    else:
+                        best_alleles[locus] = [allel, q_score, template_cover, depth]
 
         # Get called alleles
         allel_str = self.filename
         for locus in gene_list:
             locus = locus.strip()
             if locus in best_alleles:
-                 allel_str += "\t%s" %(best_alleles[locus])
-            else:
+                 allel_str += "\t%s" %(best_alleles[locus][0])
+            elif locus in found_loci:
                  allel_str += "\tNaN"
+            else:
+                 allel_str += "\tN"
         return [allel_str]
 
 
@@ -482,7 +504,7 @@ def st_typing(pickle_path, inp):
     """
     Takes the path to a pickled dictionary, the inp list of the allel 
     number that each loci has been assigned, and an output file string
-    where the found st type and similaity is written into it.  
+    where the found st type and similaity is written into it. 
     """
 
     # Find best ST type for all allel profiles
