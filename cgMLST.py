@@ -413,14 +413,19 @@ class KMA():
         """ Constructor map reads from seqfile object using kma.
         """
         # Create kma command line list
-        kma_call_list = [kma_path, "-i"]
         if fasta == False:
             filename = seqfile.filename
-            kma_call_list.append(seqfile.path)
+
             # Add reverse reads if paired-end data
             if(seqfile.pe_file_reverse):
+                kma_call_list = [kma_path, "-ipe"]
+                kma_call_list.append(seqfile.path)
                 kma_call_list.append(seqfile.pe_file_reverse)
-        else: 
+            else:
+                kma_call_list = [kma_path, "-i"]
+                kma_call_list.append(seqfile.path)
+        else:
+            kma_call_list = [kma_path, "-i"]
             filename = seqfile.split('/')[-1].split('.')[0]
             kma_call_list.append(seqfile)
 
@@ -432,7 +437,7 @@ class KMA():
         kma_call_list += [
             "-o", result_file_tmp,
             "-t_db", db,
-            "-mem_mode", "-dense", "-boot", "-1t1", "-and"]
+            "-mem_mode", "-cge", "-boot", "-1t1", "-and"]
 
         # Call kma externally
         eprint("# KMA call: " + " ".join(kma_call_list))
