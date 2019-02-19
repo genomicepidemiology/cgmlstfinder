@@ -2,6 +2,7 @@
 import os, sys, shutil, argparse, subprocess, pickle, re, gzip, time
 from ete3 import Tree
 from difflib import ndiff
+import hashlib
 
 def eprint(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs)
@@ -428,6 +429,7 @@ class KMA():
         result_file_tmp = tmp_dir + "/kma_" + filename
         self.filename = filename
         self.result_file = result_file_tmp + ".res"
+        self.fasta_file = result_file_tmp + ".fsa"
         self.seqfile = seqfile
 
         kma_call_list += [
@@ -441,6 +443,38 @@ class KMA():
         out, err = process.communicate()
         eprint("KMA call ended")
 
+    def md5_sum(self, md5_alleles, best_alleles):
+        # Get fasta sequence from kma .fsa file
+        with open(self.fasta_file, "r") as fsa_file:
+            for line in fsa_file:
+                line = line.rstrip()
+                if line.startswith(">"):
+                    entry = line[1:]
+                # Save sequence if entry in the md5 dict and not in best alleles
+                elif entry in md5_alleles:
+                    if md5_alleles[entry]["locus"] not in best_alleles:
+                        md5_alleles[entry]["seq"] += line
+
+        # Get md5 for all 'clean' sequences
+        for entry, d in md5_alleles.items():
+            if d["seq"] != "":
+                # Check that only ATCG are in the sequence and all bases are uppercase
+                # (This assumes that all 4 bases has to be present in the sequence)
+                if set(d["seq"]) == {"A", "T", "C", "G"}:
+                    md5_alleles[entry]["md5"] = hashlib.md5(d["seq"].encode('utf-8')).hexdigest()
+
+        md5_final = {}
+        for entry in md5_alleles:
+            locus = md5_alleles[entry]["locus"]
+            ident = md5_alleles[entry]["identity"]
+            if "md5" in md5_alleles[entry]:
+                if locus not in md5_final:
+                    md5_final[locus] = md5_alleles[entry]
+                else:
+                    if ident > md5_final[locus]["identity"]:
+                        md5_final[locus] = md5_alleles[entry]
+        return md5_final
+
     def best_allel_hits(self):
         """ 
         Extracts perfect matching allel hits from kma results file and returns
@@ -448,7 +482,8 @@ class KMA():
         """
 
         best_alleles = {}
-        
+        md5_alleles = {}
+
         # Create dict of locus and allel with the highest quality score
         with open(self.result_file, "r") as result_file:
             header = result_file.readline()
@@ -469,6 +504,7 @@ class KMA():
                 locus = loci_allel_object.group(1)
                 allel = loci_allel_object.group(2)
 
+                locus_allele_entry = data[0]
                 q_score = float(data[q_val_index])
                 template_cover = float(data[template_cover_index])
                 query_id = float(data[query_id_index])
@@ -483,17 +519,26 @@ class KMA():
                     else:
                         best_alleles[locus] = [allel, q_score, template_cover, depth]
 
+                # Find potential new alleles to get md5 checksum
+                elif query_id != 100 and template_cover == 100:
+                    md5_alleles[locus_allele_entry] = {"locus":locus, "allele":allel,
+                                                           "identity":query_id,
+                                                           "depth":depth, "seq":""}
+        print(md5_alleles)
+        md5_dict = self.md5_sum(md5_alleles, best_alleles)
+        print(md5_dict)
+
         # Get called alleles
-        allel_str = self.filename
+        allele_profile = [self.filename]
         for locus in gene_list:
             locus = locus.strip()
             if locus in best_alleles:
-                 allel_str += "\t%s" %(best_alleles[locus][0])
-            elif locus in found_loci:
-                 allel_str += "\tNaN"
+                 allele_profile.append(str(best_alleles[locus][0]))
+            elif locus in md5_dict:
+                 allele_profile.append(md5_dict[locus]["md5"])
             else:
-                 allel_str += "\tN"
-        return [allel_str]
+                 allele_profile.append("-")
+        return ["\t".join(allele_profile)]
 
 
 def st_typing(pickle_path, inp):
