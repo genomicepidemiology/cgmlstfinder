@@ -583,8 +583,7 @@ if __name__ == '__main__':
                         metavar="DB_DIR")
     parser.add_argument("-t", "--tmp_dir",
                         help="Temporary directory for storage of the results\
-                              from the external software.",
-                        default="cgMLST_tmp_dir")
+                              from the external software.")
     parser.add_argument("-k", "--kmapath",
                         help="Path to executable kma program",
                         default="kma",
@@ -678,13 +677,13 @@ if __name__ == '__main__':
 
     for seqfile in fasta_files:
         # Run KMA to find alleles from fasta file
-        seq_kma = KMA(seqfile, args.tmp_dir, db_species_scheme, gene_list, kma_path, fasta = True)
+        seq_kma = KMA(seqfile, tmp_dir, db_species_scheme, gene_list, kma_path, fasta = True)
         # Get called allelel
         allel_output += seq_kma.best_allel_hits()
 
     for seqfile in fastq_files:
         # Run KMA to find alleles from fastq file
-        seq_kma = KMA(seqfile, args.tmp_dir, db_species_scheme, gene_list, kma_path, fasta = False)
+        seq_kma = KMA(seqfile, tmp_dir, db_species_scheme, gene_list, kma_path, fasta = False)
         # Get called allelel
         allel_output += seq_kma.best_allel_hits()
 
