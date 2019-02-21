@@ -1,7 +1,7 @@
 cgMLSTFinder
 ===================
 
-Plasmid Multi-Locus Sequence Typing
+Core genome Multi-Locus Sequence Typing
 
 
 Documentation
