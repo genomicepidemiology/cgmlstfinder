@@ -1,6 +1,4 @@
 .DS_Store
-output
 *.gz
-config_prg.txt
-test
+test/*
 *~
