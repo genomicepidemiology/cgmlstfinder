@@ -109,7 +109,7 @@ newick_file = outdir + "/allele_tree.newick"
 # Check that nj program is executable
 nj_program = args.NJ_path
 if not shutil.which(nj_program):
-   sys.exit("Path to neighbor joining program must be extecuatbe")
+   sys.exit("Path to neighbor joining program '{}' must be extecuatbe".format(nj_program))
 
 os.chdir(outdir)
 

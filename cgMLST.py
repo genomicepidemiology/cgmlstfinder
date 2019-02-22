@@ -795,9 +795,8 @@ if __name__ == '__main__':
         # Check that more than 2 + header samples are included in the analysis
         if len(allel_output) > 3:
             python_path = sys.executable
-            tree_script = os.path.dirname(__file__) + "make_nj_tree.py"
+            tree_script = os.path.join(os.path.dirname(__file__), "make_nj_tree.py")
             cmd = "{} {} -i {} -o {} -n {}".format(python_path, tree_script, allele_matrix, outdir, args.nj_path)
-            print(cmd)
             proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             out, err = proc.communicate()
             out = out.decode("utf-8")
