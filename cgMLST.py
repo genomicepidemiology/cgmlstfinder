@@ -1,5 +1,5 @@
 #!/usr/bin/env python3 
-import os, sys, shutil, argparse, subprocess, pickle, re, gzip, time
+import os, sys, shutil, argparse, subprocess, shlex, pickle, re, gzip, time
 from ete3 import Tree
 from difflib import ndiff
 import hashlib
@@ -661,6 +661,9 @@ if __name__ == '__main__':
     parser.add_argument("-n", "--nj_path",
                         help="Path to executable neighbor joining program",
                         metavar="NJ_PATH")
+    parser.add_argument("-mem", "--shared_memory",
+                        action='store_true',
+                        help="Use shared memory to load database")
 
     args = parser.parse_args()
 
@@ -730,7 +733,7 @@ if __name__ == '__main__':
 
     # Write header to output file
     allel_output = ["Genome\t%s" %("\t".join(gene_list))]
-    st_output = "Sample_Names\tcgST_Assigned\tNo_of_Allels_Found\tSimilarity\n"
+    st_output = "Sample_Names\tcgST_Assigned\tNo_of_Alleles_Found\tSimilarity\n"
 
     # Load ST-dict pickle
     #pickle_path = db_dir + "/%s_profile.p"%(species_scheme)
@@ -746,6 +749,17 @@ if __name__ == '__main__':
     #        quit(1)
     summary_file = os.path.join(outdir, species + "_summary.txt")
     summary_cont = ["Sample_Names\tNo_of_Alleles\tNo_of_alleles_called\t%Called_alleles"]
+
+    # Load KMA database into shared memory
+    if args.shared_memory:
+        cmd = "kma_shm -t_db {}".format(db_species_scheme)
+        proc = subprocess.Popen(shlex.split(cmd), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        out, err = proc.communicate()
+        error_code = proc.returncode
+
+        if error_code != 0:
+            print("Shared memory could not be used.\nErr: {}".format(err))
+
 
     for seqfile in fasta_files:
         # Run KMA to find alleles from fasta file
@@ -771,7 +785,17 @@ if __name__ == '__main__':
     with open(summary_file, "w") as outfile:
         outfile.write("\n".join(summary_cont))
 
-    # Create ST-type file if pickle containing profile list exist   
+    # Destroy KMA database from shared memory
+    if args.shared_memory:
+        cmd = "kma_shm -t_db {} -destroy".format(db_species_scheme)
+        proc = subprocess.Popen(shlex.split(cmd), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        out, err = proc.communicate()
+        error_code = proc.returncode
+
+        if error_code != 0:
+            print("Shared memory could not be destroyed.\nErr: {}".format(err))
+
+    # Create ST-type file if pickle containing profile list exist
     st_filename = os.path.join(outdir, species + "_ST_results.txt")
     #if os.path.isfile(pickle_path):
     #    # Write header in output file
@@ -787,14 +811,14 @@ if __name__ == '__main__':
     with open(allele_matrix, "w") as fh:
         fh.write("\n".join(allel_output) + "\n")
 
-
+    print(args.nj_path, len(allel_output))
     # Create tree if neighbor parameter was sat
     if args.nj_path:
         # Check that more than 2 + header samples are included in the analysis
         if len(allel_output) > 3:
             python_path = sys.executable
-            cmd = "{} make_nj_tree.py -i {} -o {} -n {}".format(python_path, allele_matrix, outdir, args.nj_path)
-            print(cmd)
+            tree_script = os.path.join(os.path.dirname(__file__), "make_nj_tree.py")
+            cmd = "{} {} -i {} -o {} -n {}".format(python_path, tree_script, allele_matrix, outdir, args.nj_path)
             proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             out, err = proc.communicate()
             out = out.decode("utf-8")
