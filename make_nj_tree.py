@@ -4,11 +4,21 @@ import numpy as np
 from ete3 import Tree
 from ete3.parser.newick import NewickError
 
-def get_distance(mlst1, mlst2, length):
-    npmlst1 = np.array(mlst1)
-    npmlst2 = np.array(mlst2)
-    dist_1_2 = np.array(npmlst1 == npmlst2)
-    dist = length - dist_1_2.sum(0)
+def get_distance(mlst1, mlst2):
+
+    mlst1 = np.array(mlst1)
+    mlst2 = np.array(mlst2)
+
+    # Mask the uncalled alleles
+    mask = (mlst1 !="-") & (mlst2 !="-")
+
+    mlst1 = mlst1[mask]
+    mlst2 = mlst2[mask]
+
+    call_length = len(mlst1)
+
+    dist_1_2 = mlst1==mlst2
+    dist = call_length - dist_1_2.sum()
     return dist
 
 def distance_matrix(infile, outfile_name):
@@ -23,7 +33,6 @@ def distance_matrix(infile, outfile_name):
         samples_profile = allel_file.readlines()
 
     loci = header.strip().split("\t")[1:]
-    length = len(loci)
     first_sample = True
     first_profile = np.array([])
     for profile in samples_profile:
@@ -43,7 +52,7 @@ def distance_matrix(infile, outfile_name):
             dis = "0"
             first_sample = False
         else:
-            dis = str(get_distance(first_alleles, alleles, length))
+            dis = str(get_distance(first_alleles, alleles))
         allele_profiles.append(alleles)
 
         dis_matrix.append([dis])
@@ -56,7 +65,7 @@ def distance_matrix(infile, outfile_name):
     for i in range(1, len(dis_matrix)):
         for j in range(1, len(dis_matrix)):
             if j < i:
-                i_j_dis = get_distance(allele_profiles[j], allele_profiles[i], length)
+                i_j_dis = get_distance(allele_profiles[j], allele_profiles[i])
                 dis_matrix[i].append(str(i_j_dis))
         outfile.write(node_IDs[i] + "\t" + "\t".join(dis_matrix[i]) + "\n")
 

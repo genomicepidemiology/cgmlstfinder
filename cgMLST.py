@@ -755,7 +755,7 @@ if __name__ == '__main__':
         allel_output += seq_kma.best_allel_hits()
 
         # Get summery file content
-        summary_cont.append("\t".join([seq_kma.filename, str(len(gene_list)), str(seq_kma.not_called_alleles),  str(kma_seq.percentage_called_alleles)]))
+        summary_cont.append("\t".join([seq_kma.filename, str(len(gene_list)), str(seq_kma.not_called_alleles),  str(seq_kma.percentage_called_alleles)]))
 
     for seqfile in fastq_files:
         # Run KMA to find alleles from fastq file
@@ -765,7 +765,7 @@ if __name__ == '__main__':
         allel_output += seq_kma.best_allel_hits()
 
         # Get summery file content
-        summary_cont.append("\t".join([seq_kma.filename, str(len(gene_list)), str(seq_kma.not_called_alleles),  str(kma_seq.percentage_called_alleles)]))
+        summary_cont.append("\t".join([seq_kma.filename, str(len(gene_list)), str(seq_kma.not_called_alleles),  str(seq_kma.percentage_called_alleles)]))
 
     # write
     with open(summary_file, "w") as outfile:
@@ -800,6 +800,7 @@ if __name__ == '__main__':
             out = out.decode("utf-8")
             err = err.decode("utf-8")
 
+            print(out)
             if proc.returncode != 0:
                 eprint("No neighbor joining tree was created. The neighbor program responded with this: {}".format(err))
             else:
