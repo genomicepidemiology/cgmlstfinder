@@ -431,6 +431,8 @@ class KMA():
         self.result_file = result_file_tmp + ".res"
         self.fasta_file = result_file_tmp + ".fsa"
         self.seqfile = seqfile
+        self.percentage_called_alleles = None
+        self.not_called_alleles = None
 
         kma_call_list += [
             "-o", result_file_tmp,
@@ -443,7 +445,7 @@ class KMA():
         out, err = process.communicate()
         eprint("KMA call ended")
 
-    def md5_sum(self, md5_alleles, best_alleles):
+    def _md5_sum(self, md5_alleles, best_alleles):
         # Get fasta sequence from kma .fsa file
         with open(self.fasta_file, "r") as fsa_file:
             for line in fsa_file:
@@ -525,11 +527,12 @@ class KMA():
                                                            "identity":query_id,
                                                            "depth":depth, "seq":""}
         print(md5_alleles)
-        md5_dict = self.md5_sum(md5_alleles, best_alleles)
+        md5_dict = self._md5_sum(md5_alleles, best_alleles)
         print(md5_dict)
 
         # Get called alleles
         allele_profile = [self.filename]
+        self.not_called_alleles = 0
         for locus in gene_list:
             locus = locus.strip()
             if locus in best_alleles:
@@ -538,6 +541,11 @@ class KMA():
                  allele_profile.append(md5_dict[locus]["md5"])
             else:
                  allele_profile.append("-")
+                 self.not_called_alleles += 1
+        try:
+            self.percentage_called_alleles = float(len(gene_list)) / (float(len(gene_list)) - self.not_called_alleles)
+        except ZeroDivisionError:
+            self.percentage_called_alleles = 0
         return ["\t".join(allele_profile)]
 
 
@@ -736,18 +744,32 @@ if __name__ == '__main__':
     #    except IOError:
     #        sys.stdout.write("Error, pickle not found", pickle_path)
     #        quit(1)
+    summary_file = os.path.join(outdir, species + "_summary.txt")
+    summary_cont = ["Sample_Names\tNo_of_Alleles\tNo_of_alleles_called\t%Called_alleles"]
 
     for seqfile in fasta_files:
         # Run KMA to find alleles from fasta file
         seq_kma = KMA(seqfile, tmp_dir, db_species_scheme, gene_list, kma_path, fasta = True)
+
         # Get called allelel
         allel_output += seq_kma.best_allel_hits()
+
+        # Get summery file content
+        summary_cont.append("\t".join([seq_kma.filename, str(len(gene_list)), str(seq_kma.not_called_alleles),  str(kma_seq.percentage_called_alleles)]))
 
     for seqfile in fastq_files:
         # Run KMA to find alleles from fastq file
         seq_kma = KMA(seqfile, tmp_dir, db_species_scheme, gene_list, kma_path, fasta = False)
+
         # Get called allelel
         allel_output += seq_kma.best_allel_hits()
+
+        # Get summery file content
+        summary_cont.append("\t".join([seq_kma.filename, str(len(gene_list)), str(seq_kma.not_called_alleles),  str(kma_seq.percentage_called_alleles)]))
+
+    # write
+    with open(summary_file, "w") as outfile:
+        outfile.write("\n".join(summary_cont))
 
     # Create ST-type file if pickle containing profile list exist   
     st_filename = os.path.join(outdir, species + "_ST_results.txt")
