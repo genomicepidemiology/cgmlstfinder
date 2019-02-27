@@ -432,7 +432,7 @@ class KMA():
         self.fasta_file = result_file_tmp + ".fsa"
         self.seqfile = seqfile
         self.percentage_called_alleles = None
-        self.not_called_alleles = None
+        self.called_alleles = None
 
         kma_call_list += [
             "-o", result_file_tmp,
@@ -532,7 +532,7 @@ class KMA():
 
         # Get called alleles
         allele_profile = [self.filename]
-        self.not_called_alleles = 0
+        not_called_alleles = 0
         for locus in gene_list:
             locus = locus.strip()
             if locus in best_alleles:
@@ -541,11 +541,13 @@ class KMA():
                  allele_profile.append(md5_dict[locus]["md5"])
             else:
                  allele_profile.append("-")
-                 self.not_called_alleles += 1
+                 not_called_alleles += 1
+        self.called_alleles = len(gene_list) - not_called_alleles
         try:
-            self.percentage_called_alleles = float(len(gene_list)) / (float(len(gene_list)) - self.not_called_alleles)
+            self.percentage_called_alleles = round((float(self.called_alleles) / len(gene_list)) * 100, 2)
         except ZeroDivisionError:
             self.percentage_called_alleles = 0
+
         return ["\t".join(allele_profile)]
 
 
@@ -736,17 +738,15 @@ if __name__ == '__main__':
     st_output = "Sample_Names\tcgST_Assigned\tNo_of_Alleles_Found\tSimilarity\n"
 
     # Load ST-dict pickle
-    #pickle_path = db_dir + "/%s_profile.p"%(species_scheme)
+    pickle_path = db_dir + "/profile.p"
+    if os.path.isfile(pickle_path):
+        try:
+            loci_allel_dict = pickle.load(open(pickle_path, "rb"))
+            print("pickle_loaded!")
+        except IOError:
+            eprint("Error, pickle '{}' could not be loaded".format(pickle_path))
+            sys.exit(1)
 
-    #T0 = time.time()
-    #if os.path.isfile(pickle_path):
-    #    try:
-    #        loci_allel_dict = pickle.load(open(pickle_path, "rb"))
-    #        T1 = time.time()
-    #        eprint("pickle_loaded: %d s"%(int(T1-T0)) )
-    #    except IOError:
-    #        sys.stdout.write("Error, pickle not found", pickle_path)
-    #        quit(1)
     summary_file = os.path.join(outdir, species + "_summary.txt")
     summary_cont = ["Sample_Names\tNo_of_Alleles\tNo_of_alleles_called\t%Called_alleles"]
 
@@ -769,7 +769,7 @@ if __name__ == '__main__':
         allel_output += seq_kma.best_allel_hits()
 
         # Get summery file content
-        summary_cont.append("\t".join([seq_kma.filename, str(len(gene_list)), str(seq_kma.not_called_alleles),  str(seq_kma.percentage_called_alleles)]))
+        summary_cont.append("\t".join([seq_kma.filename, str(len(gene_list)), str(seq_kma.called_alleles),  str(seq_kma.percentage_called_alleles)]))
 
     for seqfile in fastq_files:
         # Run KMA to find alleles from fastq file
@@ -779,7 +779,7 @@ if __name__ == '__main__':
         allel_output += seq_kma.best_allel_hits()
 
         # Get summery file content
-        summary_cont.append("\t".join([seq_kma.filename, str(len(gene_list)), str(seq_kma.not_called_alleles),  str(seq_kma.percentage_called_alleles)]))
+        summary_cont.append("\t".join([seq_kma.filename, str(len(gene_list)), str(seq_kma.called_alleles),  str(seq_kma.percentage_called_alleles)]))
 
     # write
     with open(summary_file, "w") as outfile:
@@ -797,14 +797,14 @@ if __name__ == '__main__':
 
     # Create ST-type file if pickle containing profile list exist
     st_filename = os.path.join(outdir, species + "_ST_results.txt")
-    #if os.path.isfile(pickle_path):
-    #    # Write header in output file
-    #    st_output += st_typing(loci_allel_dict, allel_output)
+    if os.path.isfile(pickle_path):
+        # Write header in output file
+        st_output += st_typing(loci_allel_dict, allel_output)
 
-    #    # Write ST-type output
-    #    with open(st_filename, "w") as fh:
-    #        fh.write(st_output)
-    #    print(st_output)
+        # Write ST-type output
+        with open(st_filename, "w") as fh:
+            fh.write(st_output)
+        print(st_output)
 
     # Write allel matrix output
     allele_matrix = os.path.join(outdir, species + "_results.txt")
