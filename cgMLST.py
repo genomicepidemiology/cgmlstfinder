@@ -800,7 +800,7 @@ if __name__ == '__main__':
 
     # Write output summary file
     summary_file = os.path.join(outdir, species + "_summary.txt")
-    summary_header = "Sample_Names\tTotal_number_of_loci\tNumber_of_called_alleles\t%_called_alleles\tcgST\tAlleles_matches_in_cgST\t%_allele_matches"
+    summary_header = "Sample_name\tTotal_number_of_loci\tNumber_of_called_alleles\t%_Called_alleles\tcgST\tAllele_matches_in_cgST\t%_Allele_matches"
     # Create output lines
     summary_cont = st_typing(loci_allel_dict, allel_output, summary_cont, pickle_path)
 
