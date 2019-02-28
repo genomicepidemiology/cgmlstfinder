@@ -544,14 +544,14 @@ class KMA():
                  not_called_alleles += 1
         self.called_alleles = len(gene_list) - not_called_alleles
         try:
-            self.percentage_called_alleles = round((float(self.called_alleles) / len(gene_list)) * 100, 2)
+            self.percentage_called_alleles = round((float(self.called_alleles) / len(gene_list)) * 100.0, 2)
         except ZeroDivisionError:
             self.percentage_called_alleles = 0
 
         return ["\t".join(allele_profile)]
 
 
-def st_typing(pickle_path, inp):
+def st_typing(loci_allel_dict, inp, summary_cont, pickle_path):
     """
     Takes the path to a pickled dictionary, the inp list of the allel 
     number that each loci has been assigned, and an output file string
@@ -559,7 +559,7 @@ def st_typing(pickle_path, inp):
     """
 
     # Find best ST type for all allel profiles
-    st_output = ""
+    st_output = []
 
     # First line contains matrix column headers, which are the specific loci
     loci = inp[0].strip().split("\t")
@@ -568,29 +568,41 @@ def st_typing(pickle_path, inp):
         sample = sample_str.strip().split("\t")
         sample_name = sample[0]
         st_hits = []
-        for i in range(1, len(sample)):
-            allel = sample[i].encode('utf-8')
-            locus = loci[i].encode('utf-8')
-            # Loci/Allel combination may not be found in the large profile file
-            st_hits += loci_allel_dict[locus].get(allel, ["None"])
 
-        # Find most frequent st_type in st_hits
-        score = {}
-        max_count = 0
-        best_hit = b""
-        for hit in st_hits:
-            if hit in score:
-                score[hit] += 1
-                if max_count < score[hit]:
-                    max_count = score[hit]
-                    best_hit = hit
-            elif(hit is not "None"):
-                score[hit] = 1
+        # Create ST-type file if pickle containing profile list exist
+        if os.path.isfile(pickle_path):
 
-        # Prepare output string
-        similarity = round(max_count/(len(loci) - 1)*100, 2)
-        st_output += "%s\t%s\t%d\t%.2f\n"%(sample_name, best_hit.decode("utf-8"), max_count, similarity)
-        #st_output += "%s\t%s\t%d\t%.2f\n"%(sample_name, best_hit, max_count, similarity)
+            for i in range(1, len(sample)):
+                allel = sample[i]
+                locus = loci[i]
+                # Loci/Allel combination may not be found in the large profile file
+                st_hits += loci_allel_dict[locus].get(allel, ["None"])
+
+            # Find most frequent st_type in st_hits
+            score = {}
+            max_count = 0
+            best_hit = ""
+            for hit in st_hits:
+                if hit in score:
+                    score[hit] += 1
+                    if max_count < score[hit]:
+                        max_count = score[hit]
+                        best_hit = hit
+                elif(hit is not "None"):
+                    score[hit] = 1
+
+            # Prepare output string
+            similarity = str(round(max_count/(len(loci) - 1)*100, 2))
+        else:
+            best_hit = "-"
+            max_count = "-"
+            similarity = "-"
+
+        # Create output string
+        No_alleles = summary_cont[sample_name]["called_alleles"]
+        Perc_alleles = summary_cont[sample_name]["perc_called_alleles"]
+        st_output.append("\t".join([sample_name, str(len(loci) - 1), No_alleles, Perc_alleles,
+                                    str(best_hit), str(max_count), similarity]))
 
     return st_output
 
@@ -636,36 +648,34 @@ if __name__ == '__main__':
                         nargs="+",
                         metavar="FASTQ",
                         default=None)
-    # Optional arguments
-    parser.add_argument("-o", "--outdir",
-                        help="Output file.",
-                        default="AlleleMatrix.mat",
-                        metavar="OUTPUT_FILE")
     parser.add_argument("-s", "--species",
-                        help="species schemes to apply, e.g. ecoli_cgMLST. Must match the name of the species database",
-                        #choices=['ecoli_cgMLST', 'yersinia_cgMLST', 'campy_cgMLST', 
-                        #         'salmonella_cgMLST_v2', 'listeria_cgMLST'],
+                        help="Species. Must match the name of a species in the database",
                         default=None,
-                        metavar="SPECIES_SCHEME")
+                        metavar="SPECIES",
+                        required=True)
     parser.add_argument("-db", "--databases",
                         help="Directory containing the databases and gene\
-                              lists for each species_scheme.",
-                        default=("/home/data1/services/cgMLSTFinder/"
-                                 "database_current"),
-                        metavar="DB_DIR")
+                              lists for each species.",
+                        metavar="DB_DIR",
+                        required=True)
+    # Optional arguments
+    parser.add_argument("-o", "--outdir",
+                        help="Output directory.",
+                        default=os.getcwd(),
+                        metavar="OUTPUT_DIR")
     parser.add_argument("-t", "--tmp_dir",
                         help="Temporary directory for storage of the results\
                               from the external software.")
     parser.add_argument("-k", "--kmapath",
-                        help="Path to executable kma program",
+                        help="Path to executable kma program.",
                         default="kma",
                         metavar="KMA_PATH")
     parser.add_argument("-n", "--nj_path",
-                        help="Path to executable neighbor joining program",
+                        help="Path to executable neighbor joining program.",
                         metavar="NJ_PATH")
     parser.add_argument("-mem", "--shared_memory",
                         action='store_true',
-                        help="Use shared memory to load database")
+                        help="Use shared memory to load database.")
 
     args = parser.parse_args()
 
@@ -735,7 +745,7 @@ if __name__ == '__main__':
 
     # Write header to output file
     allel_output = ["Genome\t%s" %("\t".join(gene_list))]
-    st_output = "Sample_Names\tcgST_Assigned\tNo_of_Alleles_Found\tSimilarity\n"
+    summary_cont = {}
 
     # Load ST-dict pickle
     pickle_path = db_dir + "/profile.p"
@@ -746,9 +756,6 @@ if __name__ == '__main__':
         except IOError:
             eprint("Error, pickle '{}' could not be loaded".format(pickle_path))
             sys.exit(1)
-
-    summary_file = os.path.join(outdir, species + "_summary.txt")
-    summary_cont = ["Sample_Names\tNo_of_Alleles\tNo_of_alleles_called\t%Called_alleles"]
 
     # Load KMA database into shared memory
     if args.shared_memory:
@@ -769,7 +776,8 @@ if __name__ == '__main__':
         allel_output += seq_kma.best_allel_hits()
 
         # Get summery file content
-        summary_cont.append("\t".join([seq_kma.filename, str(len(gene_list)), str(seq_kma.called_alleles),  str(seq_kma.percentage_called_alleles)]))
+        summary_cont[seq_kma.filename] = {"called_alleles":str(seq_kma.called_alleles),
+                                          "perc_called_alleles":str(seq_kma.percentage_called_alleles)}
 
     for seqfile in fastq_files:
         # Run KMA to find alleles from fastq file
@@ -779,11 +787,8 @@ if __name__ == '__main__':
         allel_output += seq_kma.best_allel_hits()
 
         # Get summery file content
-        summary_cont.append("\t".join([seq_kma.filename, str(len(gene_list)), str(seq_kma.called_alleles),  str(seq_kma.percentage_called_alleles)]))
-
-    # write
-    with open(summary_file, "w") as outfile:
-        outfile.write("\n".join(summary_cont))
+        summary_cont[seq_kma.filename] = {"called_alleles":str(seq_kma.called_alleles),
+                                          "perc_called_alleles":str(seq_kma.percentage_called_alleles)}
 
     # Destroy KMA database from shared memory
     if args.shared_memory:
@@ -795,15 +800,16 @@ if __name__ == '__main__':
         if error_code != 0:
             print("Shared memory could not be destroyed.\nErr: {}".format(err))
 
-    # Create ST-type file if pickle containing profile list exist
-    st_filename = os.path.join(outdir, species + "_ST_results.txt")
-    if os.path.isfile(pickle_path):
-        # Write header in output file
-        st_output += st_typing(loci_allel_dict, allel_output)
+    # Write output summary file
+    summary_file = os.path.join(outdir, species + "_summary.txt")
+    summary_header = "Sample_Names\tTotal_number_of_loci\tNumber_of_called_alleles\t%_called_alleles\tcgST\tAlleles_matches_in_cgST\t%_allele_matches"
+    # Create output lines
+    st_output = st_typing(loci_allel_dict, allel_output, summary_cont, pickle_path)
 
-        # Write ST-type output
-        with open(st_filename, "w") as fh:
-            fh.write(st_output)
+    # Write ST-type output
+    with open(summary_file, "w") as fh:
+        fh.write(summary_header + "\n")
+        fh.write("\n".join(st_output) + "\n")
         print(st_output)
 
     # Write allel matrix output
