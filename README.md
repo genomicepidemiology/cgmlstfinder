@@ -26,6 +26,7 @@ Setting up cgMLSTFinder program
 cd /path/to/some/dir
 # Clone and enter the cgmlstfinder directory
 git clone https://bitbucket.org/genomicepidemiology/cgmlstfinder.git
+
 cd cgmlstfinder
 ```
 
@@ -53,37 +54,40 @@ This script will install the already kma_index cgMLST schemes
 The program can be invoked with the -h option to get help and more information of the service.
 
 ```bash
-usage: cgMLST.py [-h] [-o OUTPUT_FILE] [-s SPECIES_SCHEME] [-db DB_DIR]
-                 [-t TMP_DIR] [-k KMA_PATH] [-n NJ_PATH]
+usage: cgMLST.py [-h] -s SPECIES -db DB_DIR [-o OUTPUT_DIR] [-t TMP_DIR]
+                 [-k KMA_PATH] [-n NJ_PATH] [-mem]
                  FASTQ [FASTQ ...]
+
 
 positional arguments:
   FASTQ                 FASTQ files to do cgMLST on.
 
 optional arguments:
   -h, --help            show this help message and exit
-  -o OUTPUT_FILE, --outdir OUTPUT_FILE
-                        Output file.
-  -s SPECIES_SCHEME, --species SPECIES_SCHEME
-                        species schemes to apply, e.g. ecoli_cgMLST. Must
-                        match the name of the species database
+  -s SPECIES, --species SPECIES
+                        Species. Must match the name of a species in the
+                        database
   -db DB_DIR, --databases DB_DIR
                         Directory containing the databases and gene lists for
-                        each species_scheme.
+                        each species.
+  -o OUTPUT_DIR, --outdir OUTPUT_DIR
+                        Output directory.
   -t TMP_DIR, --tmp_dir TMP_DIR
                         Temporary directory for storage of the results from
                         the external software.
   -k KMA_PATH, --kmapath KMA_PATH
-                        Path to executable kma program
+                        Path to executable kma program.
   -n NJ_PATH, --nj_path NJ_PATH
-                        Path to executable neighbor joining program
+                        Path to executable neighbor joining program.
+  -mem, --shared_memory
+                        Use shared memory to load database.
 
 ```
  
 Example of command to run cgMLSTFinder:
 
 ```bash
-python3 cgMLST.py /path/to/isolate.fq.gz -s salmonella -o /path/to/outdir -db ../cgmlstfinder_db/ -k /usr/local/bin/kma -n /usr/local/bin/neighbor
+python3 cgMLST.py /path/to/isolate.fq.gz -s salmonella -o /path/to/outdir -db /path/to/cgmlstfinder_db/ -k /usr/local/bin/kma -n /usr/local/bin/neighbor
 ``` 
 
 ## Web-server
@@ -113,3 +117,8 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
+=======
+```
+
+Get neighbor from:
+http://evolution.genetics.washington.edu/phylip/
