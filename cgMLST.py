@@ -1,5 +1,5 @@
 #!/usr/bin/env python3 
-import os, sys, shutil, argparse, subprocess, shlex, pickle, re, gzip, time
+import os, sys, shutil, argparse, subprocess, shlex, pickle, re, gzip, time, json
 from ete3 import Tree
 from difflib import ndiff
 import hashlib
@@ -526,9 +526,8 @@ class KMA():
                     md5_alleles[locus_allele_entry] = {"locus":locus, "allele":allel,
                                                            "identity":query_id,
                                                            "depth":depth, "seq":""}
-        print(md5_alleles)
+
         md5_dict = self._md5_sum(md5_alleles, best_alleles)
-        print(md5_dict)
 
         # Get called alleles
         allele_profile = [self.filename]
@@ -598,13 +597,12 @@ def st_typing(loci_allel_dict, inp, summary_cont, pickle_path):
             max_count = "-"
             similarity = "-"
 
-        # Create output string
-        No_alleles = summary_cont[sample_name]["called_alleles"]
-        Perc_alleles = summary_cont[sample_name]["perc_called_alleles"]
-        st_output.append("\t".join([sample_name, str(len(loci) - 1), No_alleles, Perc_alleles,
-                                    str(best_hit), str(max_count), similarity]))
+        summary_cont[sample_name]["cgST"] = best_hit
+        summary_cont[sample_name]["allele_matches"] = max_count
+        summary_cont[sample_name]["perc_allele_matches"] = similarity
+        summary_cont[sample_name]["total_no_of_loci"] = len(loci) - 1
 
-    return st_output
+    return summary_cont
 
 
 def file_format(input_files):
@@ -756,7 +754,8 @@ if __name__ == '__main__':
         except IOError:
             eprint("Error, pickle '{}' could not be loaded".format(pickle_path))
             sys.exit(1)
-
+    else:
+        loci_allel_dict = {}
     # Load KMA database into shared memory
     if args.shared_memory:
         cmd = "kma_shm -t_db {}".format(db_species_scheme)
@@ -766,7 +765,6 @@ if __name__ == '__main__':
 
         if error_code != 0:
             print("Shared memory could not be used.\nErr: {}".format(err))
-
 
     for seqfile in fasta_files:
         # Run KMA to find alleles from fasta file
@@ -804,20 +802,42 @@ if __name__ == '__main__':
     summary_file = os.path.join(outdir, species + "_summary.txt")
     summary_header = "Sample_Names\tTotal_number_of_loci\tNumber_of_called_alleles\t%_called_alleles\tcgST\tAlleles_matches_in_cgST\t%_allele_matches"
     # Create output lines
-    st_output = st_typing(loci_allel_dict, allel_output, summary_cont, pickle_path)
+    summary_cont = st_typing(loci_allel_dict, allel_output, summary_cont, pickle_path)
+
+    # Create output string
+    output_lines = []
+    for filename, d in summary_cont.items():
+        output_lines.append("\t".join([filename, str(len(gene_list)),
+                                   str(d["called_alleles"]), str(d["perc_called_alleles"]),
+                                   str(d["cgST"]), str(d["allele_matches"]), str(d["perc_allele_matches"])]))
 
     # Write ST-type output
     with open(summary_file, "w") as fh:
         fh.write(summary_header + "\n")
-        fh.write("\n".join(st_output) + "\n")
-        print(st_output)
+        fh.write("\n".join(output_lines) + "\n")
+        for line in output_lines:
+            print(line)
 
     # Write allel matrix output
     allele_matrix = os.path.join(outdir, species + "_results.txt")
     with open(allele_matrix, "w") as fh:
         fh.write("\n".join(allel_output) + "\n")
 
-    print(args.nj_path, len(allel_output))
+    # Write json file
+    service = "cgMLSTFinder"
+    data = {service:{}}
+    userinput = {"filenames":args.input, "species":args.species}
+    run_info = {"date":time.strftime("%d.%m.%Y"),
+                "time":time.strftime("%H:%M:%S")}
+
+    data[service]["user_input"] = userinput
+    data[service]["run_info"] = run_info
+    data[service]["results"] = summary_cont
+
+    result_file = os.path.join(outdir, "data.json")
+    with open(result_file, "w") as outfile:
+        json.dump(data, outfile)
+
     # Create tree if neighbor parameter was sat
     if args.nj_path:
         # Check that more than 2 + header samples are included in the analysis
@@ -830,7 +850,6 @@ if __name__ == '__main__':
             out = out.decode("utf-8")
             err = err.decode("utf-8")
 
-            print(out)
             if proc.returncode != 0:
                 eprint("No neighbor joining tree was created. The neighbor program responded with this: {}".format(err))
             else:
