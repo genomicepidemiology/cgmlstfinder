@@ -87,7 +87,8 @@ optional arguments:
 Example of command to run cgMLSTFinder:
 
 ```bash
-python3 cgMLST.py /path/to/isolate.fq.gz -s salmonella -o /path/to/outdir -db /path/to/cgmlstfinder_db/ -k /usr/local/bin/kma -n /usr/local/bin/neighbor
+python3 cgMLST.py /path/to/isolate.fq.gz -s salmonella -o /path/to/outdir -db /path/to/cgmlstfinder_db/ 
+-k /usr/local/bin/kma -n /usr/local/bin/neighbor
 ``` 
 
 ## Web-server
