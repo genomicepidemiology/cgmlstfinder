@@ -1,4 +1,4 @@
-#!/usr/bin/env python3 
+#!/usr/bin/env python3
 import os, sys, shutil, argparse, subprocess, shlex, pickle, re, gzip, time, json
 from ete3 import Tree
 from difflib import ndiff
@@ -441,6 +441,7 @@ class KMA():
 
         kma_call_list += [
             "-o", result_file_tmp,
+            "-tmp", tmp_dir,
             "-t_db", db,
             "-mem_mode", "-cge", "-boot", "-1t1", "-and"]
 
@@ -483,9 +484,9 @@ class KMA():
         return md5_final
 
     def best_allel_hits(self):
-        """ 
+        """
         Extracts perfect matching allel hits from kma results file and returns
-        a list(string) found allel profile ordered based on the gene list. 
+        a list(string) found allel profile ordered based on the gene list.
         """
 
         best_alleles = {}
@@ -497,7 +498,7 @@ class KMA():
             header = header.strip().split("\t")
 
             depth_index          = header.index("Depth")
-            query_id_index       = header.index("Query_Identity") 
+            query_id_index       = header.index("Query_Identity")
             template_cover_index = header.index("Template_Coverage")
             q_val_index          = header.index("q_value")
 
@@ -557,9 +558,9 @@ class KMA():
 
 def st_typing(loci_allel_dict, inp, summary_cont, pickle_path):
     """
-    Takes the path to a pickled dictionary, the inp list of the allel 
+    Takes the path to a pickled dictionary, the inp list of the allel
     number that each loci has been assigned, and an output file string
-    where the found st type and similaity is written into it. 
+    where the found st type and similaity is written into it.
     """
 
     # Find best ST type for all allel profiles
@@ -637,7 +638,7 @@ def file_format(input_files):
             fasta_files.append(infile)
         else:
             invalid_files.append(infile)
-    return (fasta_files, fastq_files, invalid_files)  
+    return (fasta_files, fastq_files, invalid_files)
 
 
 if __name__ == '__main__':
