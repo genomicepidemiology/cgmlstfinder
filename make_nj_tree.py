@@ -97,6 +97,21 @@ def create_tree(matrix_path, nj_program):
 
     os.chdir(outdir)
 
+def decode_dist_matrix(seqid2name, dist_mat_file):
+    mat_cont = []
+    with open(dist_mat_file, "r") as mat_f:
+        for line in mat_f:
+            first_word = line.split()[0]
+            try:
+                mat_cont.append(line.replace(first_word, seqid2name[first_word]))
+            except KeyError:
+                mat_cont.append(line)
+
+    with open(dist_mat_file, "w") as op:
+        print("".join(mat_cont), file=op)
+
+    return
+
 ########
 # MAIN #
 ########
@@ -146,6 +161,8 @@ if os.listdir("tmp") == []:
 
 with open(newick_file, "w") as nf:
     print(tree.write(), file=nf)
+
+decode_dist_matrix(real_names, dis_matrix_file)
 
 #print(tree)
 
