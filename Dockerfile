@@ -1,95 +1,42 @@
-############################################################
-# Dockerfile to build SeqSero
-# # Define app's environment with a Dockerfile so it can be reproduced anywhere:
-############################################################
+FROM debian:stretch
 
-# Set base image to Python Anaconda
-FROM continuumio/anaconda3
+ENV DEBIAN_FRONTEND noninteractive
 
-# File Author / Maintainer
-MAINTAINER Jose Luis Bellod Cisneros
+### RUN set -ex; \
 
-# Update the repository sources list
-RUN apt-get install debian-archive-keyring
-RUN apt-key update
+RUN apt-get update -qq; \
+    apt-get install -y -qq git \
+    apt-utils \
+    wget \
+    python3-pip \
+    libz-dev \
+    ; \
+    rm -rf /var/cache/apt/* /var/lib/apt/lists/*;
 
-RUN apt-get update && apt-get install -y --no-install-recommends apt-utils\
-    aufs-tools \
-    automake \
-    ncbi-blast+ \
-    btrfs-tools \
-    build-essential \
-    ca-certificates \
-    curl \
-    debian-archive-keyring \
-    dpkg-sig \
-    emacs \
-    git \
-    iptables \
-    libapparmor-dev \
-    libcap-dev \
-    libmysqlclient-dev \
-    libsqlite3-dev \
-    libncurses-dev \
-    libbz2-dev \
-    liblzma-dev \
-    lxc \
-    mercurial \
-    openssh-server \
-    parallel \
-    perl \
-    pigz \
-    r-base \
-    reprepro
+ENV DEBIAN_FRONTEND Teletype
 
-# Install services from Github (testing repositories)
-# TODO Install deployment versions
+# Install python dependencies
+RUN pip3 install -U ete3 tabulate cgecore;
 
-RUN mkdir /root/.ssh/
-RUN ssh-keyscan bitbucket.org >> /root/.ssh/known_hosts
-RUN ssh-keyscan cpanmin.us >> /root/.ssh/known_hosts
-RUN echo "    IdentityFile ~/.ssh/id_rsa" >> /etc/ssh/ssh_config
+# Install kma
+RUN git clone --depth 1 https://bitbucket.org/genomicepidemiology/kma.git; \
+    cd kma && make; \
+    mv kma* /bin/
 
-RUN chmod 777 -R /tmp && chmod o+t -R /tmp
+COPY cgMLST.py /usr/src/cgMLST.py
 
-# CGE Tools
-#################################################
+RUN chmod 755 /usr/src/cgMLST.py;
 
+ENV PATH $PATH:/usr/src
+# Setup .bashrc file for convenience during debugging
+RUN echo "alias ls='ls -h --color=tty'\n"\
+"alias ll='ls -lrt'\n"\
+"alias l='less'\n"\
+"alias du='du -hP --max-depth=1'\n"\
+"alias cwd='readlink -f .'\n"\
+"PATH=$PATH\n">> ~/.bashrc
 
-# Install dependencies
-#################################################
+WORKDIR /workdir
 
-# Install kma #
-
-RUN git clone "https://bitbucket.org/genomicepidemiology/kma.git" /usr/src/kma
-WORKDIR /usr/src/kma
-RUN gcc -O3 -o kma KMA.c -lm
-RUN gcc -O3 -o kma_index KMA_index.c
-RUN gcc -O3 -o kma_shm KMA_SHM.c
-WORKDIR /usr/src/
-
-# Download services
-RUN git clone --recursive  "https://bitbucket.org/genomicepidemiology/cgmlstfinder.git" /usr/src/cgmlstfinder
-RUN find -type f -iname "/usr/src/cgmlstfinder/*.py" -print -exec chmod 775 {} \;
-RUN touch /usr/src/cgmlstfinder/python_module_dependencies/__init__.py
-RUN touch /usr/src/cgmlstfinder/python_module_seqfilehandler/__init__.py
-
-# Add service scripts to path
-ENV PATH $PATH:/usr/src/cgmlstfinder
-ENV PATH $PATH:/usr/src/kma
-ENV PATH $PATH:/opt/conda/bin
-
-# Set convinience aliases
-RUN echo "alias edit='emacs'" >> ~/.bashrc
-RUN echo "alias ls='ls -h --color=tty'" >> ~/.bashrc
-RUN echo "alias ll='ls -lrt'" >> ~/.bashrc
-RUN echo "alias l='less'" >> ~/.bashrc
-RUN echo "alias du='du -hP --max-depth=1'" >> ~/.bashrc
-RUN echo "alias cwd='readlink -f .'" >> ~/.bashrc
-
-# Add PATH to ~/.bashrc -This way you can access programs via ssh
-RUN echo "PATH=$PATH" >> ~/.bashrc
-
-# Set default working directory
-RUN mkdir /usr/test
-WORKDIR /usr/test
+# Execute program when running the container
+ENTRYPOINT ["/usr/src/cgMLST.py"]

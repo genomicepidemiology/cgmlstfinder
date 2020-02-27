@@ -764,7 +764,7 @@ if __name__ == '__main__':
         loci_allel_dict = {}
     # Load KMA database into shared memory
     if args.shared_memory:
-        cmd = "kma_shm -t_db {}".format(db_species_scheme)
+        cmd = "{}/kma_shm -t_db {}".format(os.path.dirname(kma_path),db_species_scheme)
         proc = subprocess.Popen(shlex.split(cmd), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         out, err = proc.communicate()
         error_code = proc.returncode
@@ -796,7 +796,7 @@ if __name__ == '__main__':
 
     # Destroy KMA database from shared memory
     if args.shared_memory:
-        cmd = "kma_shm -t_db {} -destroy".format(db_species_scheme)
+        cmd = "{}/kma_shm -t_db {} -destroy".format(os.path.dirname(kma_path),db_species_scheme)
         proc = subprocess.Popen(shlex.split(cmd), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         out, err = proc.communicate()
         error_code = proc.returncode

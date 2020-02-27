@@ -33,7 +33,7 @@ cd cgmlstfinder
 Build Docker container
 ```bash
 # Build container
-docker build -t pmlst .
+docker build -t cgmlstfinder .
 ```
 
 #Download and install cgMLST database
@@ -50,6 +50,15 @@ python3 INSTALL.py
 This script will install the already kma_index cgMLST schemes
 
 ## Usage
+Run Docker container
+
+```bash
+# Run pmlst container
+docker run --rm -it \
+       -v $pMLST_DB:/database \
+       -v $(pwd):/workdir \
+       cgmlstfinder -o [OUTPUT PATH] -s [SPECIE] -db [DATABASE PATH] -t [TEMPORARY FILE] [INPUT/S FASTQ]
+```
 
 The program can be invoked with the -h option to get help and more information of the service.
 
@@ -83,13 +92,13 @@ optional arguments:
                         Use shared memory to load database.
 
 ```
- 
+
 Example of command to run cgMLSTFinder:
 
 ```bash
-python3 cgMLST.py /path/to/isolate.fq.gz -s salmonella -o /path/to/outdir -db /path/to/cgmlstfinder_db/ 
+python3 cgMLST.py /path/to/isolate.fq.gz -s salmonella -o /path/to/outdir -db /path/to/cgmlstfinder_db/
 -k /usr/local/bin/kma -n /usr/local/bin/neighbor
-``` 
+```
 
 ## Web-server
 
