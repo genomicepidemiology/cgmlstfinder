@@ -43,19 +43,19 @@ cd /path/to/some/dir
 # Clone install script from git repository
 git clone https://bitbucket.org/genomicepidemiology/cgmlstfinder_db.git
 cd cgmlstfinder_db
-# Install pMLST database with executable kma_index program
+# Install cgMLST database
 python3 INSTALL.py
 ```
 
-This script will install the already kma_index cgMLST schemes
+This script will install the already kma_indexed cgMLST schemes. 
 
 ## Usage
 Run Docker container
 
 ```bash
-# Run pmlst container
+# Run cgMLST container
 docker run --rm -it \
-       -v $pMLST_DB:/database \
+       -v $cgMLST_DB:/database \
        -v $(pwd):/workdir \
        cgmlstfinder -o [OUTPUT PATH] -s [SPECIE] -db [DATABASE PATH] -t [TEMPORARY FILE] [INPUT/S FASTQ]
 ```
