@@ -43,7 +43,8 @@ cd /path/to/some/dir
 # Clone install script from git repository
 git clone https://bitbucket.org/genomicepidemiology/cgmlstfinder_db.git
 cd cgmlstfinder_db
-# Install cgMLST database
+cgMLST_DB=$(pwd)
+# Install cgMLST database (look at https://bitbucket.org/genomicepidemiology/cgmlstfinder_db.git for more information)
 python3 INSTALL.py
 ```
 
