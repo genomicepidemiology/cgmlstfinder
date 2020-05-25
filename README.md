@@ -111,6 +111,11 @@ Citation
 
 No references
 
+References
+=======
+
+1. Clausen PTLC, Aarestrup FM, Lund O. Rapid and precise alignment of raw reads against redundant databases with KMA. BMC Bioinformatics 2018; 19:307. 
+
 License
 =======
 
