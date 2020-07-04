@@ -54,8 +54,7 @@ This script will install the already kma_indexed cgMLST schemes.
 In order to run the program without using docker, Python 3.5 (or newer) should be installed along with the following versions of the modules (or newer).
 
 #### Modules
-- cgecore 1.5.5
-- tabulate 0.7.7
+- ete3
 
 Modules can be installed using the following command. Here, the installation of the module ete3 is used as an example:
 ```bash
