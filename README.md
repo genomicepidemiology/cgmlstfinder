@@ -50,6 +50,24 @@ python3 INSTALL.py
 
 This script will install the already kma_indexed cgMLST schemes. 
 
+## Dependencies
+In order to run the program without using docker, Python 3.5 (or newer) should be installed along with the following versions of the modules (or newer).
+
+#### Modules
+- cgecore 1.5.5
+- tabulate 0.7.7
+
+Modules can be installed using the following command. Here, the installation of the module ete3 is used as an example:
+```bash
+pip3 install ete3
+```
+#### KMA and BLAST
+Additionally KMA should be installed.
+The newest version of KMA can be installed from here:
+```url
+https://bitbucket.org/genomicepidemiology/kma
+```
+
 ## Usage
 Run Docker container
 
