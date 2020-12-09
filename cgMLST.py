@@ -688,7 +688,7 @@ if __name__ == '__main__':
         if not os.path.exists(args.outdir):
             sys.exit("Output directory '{}' does not exist".format(outdir))
     else:
-       args.outdir = os.getcwd()
+       outdir = os.getcwd()
 
     if args.tmp_dir:
         tmp_dir = os.path.abspath(args.tmp_dir)
