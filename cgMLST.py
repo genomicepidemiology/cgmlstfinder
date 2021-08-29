@@ -1,7 +1,3 @@
-<<<<<<< Updated upstream
-#!/usr/bin/env python3 
-import os, sys, shutil, argparse, subprocess, shlex, pickle, re, gzip, time, json
-=======
 #!/usr/bin/env python3
 
 """
@@ -18,7 +14,6 @@ version_numb = "v1.2.0"
 # imports
 import os, sys, shutil, subprocess, shlex, pickle, re, gzip, time, json
 from argparse import ArgumentParser
->>>>>>> Stashed changes
 from ete3 import Tree
 from difflib import ndiff
 import hashlib
@@ -53,7 +48,8 @@ class SeqFile():
 
         seqfile = os.path.abspath(seqfile)
         if(not os.path.isfile(seqfile)):
-            sys.exit("File not found: " + seqfile)
+            print("File not found: " + seqfile)
+            sys.exit(1)
         self.path = seqfile
         self.pe_file_reverse = None
 
@@ -71,8 +67,9 @@ class SeqFile():
             # Add path to reverse pair file
             self.pe_file_reverse = os.path.abspath(pe_file_reverse)
             if(not os.path.isfile(pe_file_reverse)):
-                sys.exit("Reverse pair file not found: \"" + pe_file_reverse
+                print("Reverse pair file not found: \"" + pe_file_reverse
                       + "\"")
+                sys.exit(1)
             self.path_reverse = pe_file_reverse
 
             self.filename_reverse = SeqFile.get_read_filename(
@@ -80,8 +77,9 @@ class SeqFile():
 
             # Check if pair is gzipped
             if(self.gzipped != SeqFile.is_gzipped(pe_file_reverse)):
-                sys.exit("ERROR: It seems that only one of the read pair files is\
+                print("ERROR: It seems that only one of the read pair files is\
                       gzipped.")
+                sys.exit(1)
         elif(phred_format):
             self.seq_format = "single"
         else:
@@ -186,8 +184,8 @@ class SeqFile():
                 else:
                     cmd = "cat "
                 cmd += path + " >> " + out_path + "/" + out_filename
-                subprocess.run(cmd, shell=True)
-            subprocess.run("gzip " + out_path + "/" + out_filename, shell=True)
+                subprocess.Popen(cmd, shell=True) 
+            subprocess.Popen("gzip " + out_path + "/" + out_filename, shell=True)
             out_list.append(out_path + "/" + out_filename + ".gz")
             if(verbose):
                 print("Wrote: " + out_path + "/" + out_filename + ".gz")
@@ -453,17 +451,14 @@ class KMA():
         """ Constructor map reads from seqfile object using kma.
         """
         # Create kma command line list
-        kma_call_list = [kma_path, "-i"]
         if fasta == False:
             filename = seqfile.filename
-            kma_call_list.append(seqfile.path)
+
             # Add reverse reads if paired-end data
             if(seqfile.pe_file_reverse):
+                kma_call_list = [kma_path, "-ipe"]
+                kma_call_list.append(seqfile.path)
                 kma_call_list.append(seqfile.pe_file_reverse)
-<<<<<<< Updated upstream
-        else: 
-            filename = seqfile.split('/')[-1].split('.')[0]
-=======
                 filename = filename.split("/")[-1].split(".")[0]
                 # Erase PE endings
                 filename = filename.replace("_1", "")
@@ -478,7 +473,6 @@ class KMA():
         else:
             kma_call_list = [kma_path, "-i"]
             filename = seqfile.split("/")[-1].split(".")[0]
->>>>>>> Stashed changes
             kma_call_list.append(seqfile)
         
         result_file_tmp = tmp_dir + "/kma_" + filename
@@ -489,10 +483,12 @@ class KMA():
         self.percentage_called_alleles = None
         self.called_alleles = None
 
+        tmp_dir = tmp_dir +"/"
         kma_call_list += [
             "-o", result_file_tmp,
+            "-tmp", tmp_dir,
             "-t_db", db,
-            "-mem_mode", "-dense", "-boot", "-1t1", "-and"]
+            "-mem_mode", "-cge", "-boot", "-1t1", "-and"]
 
         # Call kma externally
         print("# KMA call: " + " ".join(kma_call_list))
@@ -546,9 +542,9 @@ class KMA():
         return md5_final
 
     def best_allel_hits(self):
-        """ 
+        """
         Extracts perfect matching allel hits from kma results file and returns
-        a list(string) found allel profile ordered based on the gene list. 
+        a list(string) found allel profile ordered based on the gene list.
         """
 
         best_alleles = {}
@@ -560,7 +556,7 @@ class KMA():
             header = header.strip().split("\t")
 
             depth_index          = header.index("Depth")
-            query_id_index       = header.index("Query_Identity") 
+            query_id_index       = header.index("Query_Identity")
             template_cover_index = header.index("Template_Coverage")
             q_val_index          = header.index("q_value")
 
@@ -628,9 +624,9 @@ class KMA():
 
 def st_typing(loci_allel_dict, inp, summary_cont, pickle_path):
     """
-    Takes the path to a pickled dictionary, the inp list of the allel 
+    Takes the path to a pickled dictionary, the inp list of the allel
     number that each loci has been assigned, and an output file string
-    where the found st type and similaity is written into it. 
+    where the found st type and similaity is written into it.
     """
 
     # Find best ST type for all allel profiles
@@ -690,7 +686,8 @@ def file_format(input_files):
     for infile in input_files:
         # Check valid input path
         if not os.path.exists(infile):
-            sys.exit("Input Error: Input file does not exist!\n")    
+            print("Input Error: Input file does not exist!\n")
+            sys.exit(1)    
         # Open input file and get the first character
         try:
             f =  gzip.open(infile, "rb")
@@ -706,14 +703,8 @@ def file_format(input_files):
             fasta_files.append(infile)
         else:
             invalid_files.append(infile)
-    return (fasta_files, fastq_files, invalid_files)  
+    return (fasta_files, fastq_files, invalid_files)
 
-def validate_dna(seq, alphabet=set("ATGCN")):
-    "Checks that a sequence only contains values from an alphabet"
-    leftover = set(seq.upper()) - alphabet
-    if leftover == 0:
-        return True
-    return False
 
 def runProd(assembly_path, prod_path, outdir):
     """
@@ -722,31 +713,26 @@ def runProd(assembly_path, prod_path, outdir):
     assembly_path contains the contigs/assembled genome in fasta format.
     prod_path is the path prodigal specified with -p.
     """
-    # check input is DNA
-    ###
-    
-    # Name output file
-    filename = assembly_path[:-3].rsplit("/")[-1]
-    CDS_file = outdir + "/" + filename + ".cds"
-    
+    # Process assembly input and define CDS filename
     if SeqFile.is_gzipped(assembly_path):
         # Unzip file before running Prodigal
-        cmd = "gzip -d " + assembly_path
-        subprocess.run(cmd, shell=True)
-        # Execute prodigal and write coding regions to file
-        cmd = prod_path + " -c -q -i " + assembly_path[:-3] + " -d " + CDS_file
-        print("# Executing Prodigal on " + assembly_path)
-        print("#")
-        print("# Prodigal call: " + cmd)
-        print("#")
-        proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.DEVNULL).wait() 
-        print("Prodigal call ended")
-        cmd = "rm " + assembly_path[:-3]    
-        subprocess.run(cmd, shell=True)
+        cmd = "gzip -d {}".format(assembly_path)
+        subprocess.Popen(cmd, shell=True, stdout=subprocess.DEVNULL)
+        assembly_path = assembly_path[:-3]  # remove .gz eding
+        CDS_file = os.path.join(outdir, os.path.basename(assembly_path) + ".cds")
     else:    
-        # Execute prodigal and write coding regions to file
-        cmd = prod_path + " -c -q -i " + assembly_path + " -d " + CDS_file
-        proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.DEVNULL).wait() 
+        CDS_file = os.path.join(outdir, os.path.basename(assembly_path) + ".cds")
+        
+    # Execute prodigal and write coding regions to file
+    cmd = "{} -c -q -i {} -d {}".format(prod_path,assembly_path,CDS_file)
+    print("# Executing Prodigal on " + assembly_path)
+    print("#")
+    print("# Prodigal call: " + cmd)
+    print("#")
+    proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.DEVNULL).wait() 
+    print("Prodigal call ended")
+    cmd = "rm {}".format(assembly_path)       
+    subprocess.Popen(cmd, shell=True, stdout=subprocess.DEVNULL) 
         
         
 
@@ -803,38 +789,38 @@ if __name__ == "__main__":
     if args.outdir:
         outdir = os.path.abspath(args.outdir)
         if not os.path.exists(args.outdir):
-            sys.exit("Input Error: Output dirctory does not exists!\n")
+            print("Input Error: Output dirctory does not exists!\n")
+            sys.exit(1)
     else:
-<<<<<<< Updated upstream
-       args.outdir = os.getcwd()
-
-=======
        outdir = os.getcwd()
     
     # Check if valid temporary directory is provided
->>>>>>> Stashed changes
     if args.tmp_dir:
         tmp_dir = os.path.abspath(args.tmp_dir)
         if not os.path.exists(tmp_dir):
-            sys.exit("Input Error: temperary directory does not exist\n")
+            print("Input Error: temperary directory does not exist\n")
+            sys.exit(1)
     else:
         tmp_dir = outdir
         
     # Check if valid kma path is provided
     if shutil.which(args.kmapath) is None:
-        sys.exit("No valid path to a kma program was provided. Use the -k flag to provide the path.")
+        print("No valid path to a kma program was provided. Use the -k flag to provide the path.")
+        sys.exit(1)
     kma_path = args.kmapath
     
     # Check if valid database is provided
     if args.databases:
         db_path = os.path.abspath(args.databases)
         if not os.path.exists(args.databases):
-            sys.exit("Input Error: The specified database directory does not "
-                 "exist!\n")  
+            print("Input Error: The specified database directory does not "
+                 "exist!\n")
+            sys.exit(1)  
         
     # Specify species scheme database
     if args.species is None:
-        sys.exit("Input Error: No species name was provided!\n")
+        print("Input Error: No species name was provided!\n")
+        sys.exit(1)
     else:
         species = args.species
     # Save paths including species
@@ -847,7 +833,8 @@ if __name__ == "__main__":
     # Check existence of the loci list file
     loci_list_file = "%s/loci_list.txt" % (db_dir)
     if(not os.path.isfile(loci_list_file)):
-        sys.exit("Loci list not found at expected location: %s"%(loci_list_file))
+        print("Loci list not found at expected location: %s"%(loci_list_file))
+        sys.exit(1)
     
     # Load loci file into list
     with open(loci_list_file, "r") as ll:
@@ -863,17 +850,20 @@ if __name__ == "__main__":
         try:
             loci_allel_dict = pickle.load(open(pickle_path, "rb"))
         except IOError:
-            sys.exit("Error, pickle '{}' could not be loaded\n".format(pickle_path))
+            print("Error, pickle '{}' could not be loaded\n".format(pickle_path))
+            sys.exit(1)
     else:
         loci_allel_dict = {}
     
     # Load and check input file(s)
     if args.inputfile is None:
-        sys.exit("Input Error: No inputfile was provided!\n")
+        print("Input Error: No inputfile was provided!\n")
+        sys.exit(1)
     inputfile_lst = args.inputfile.split(",")
     for file in inputfile_lst:
         if not os.path.exists(file):
-            sys.exit("Input Error: Input file not found at expected location: %s"%(file))
+            print("Input Error: Input file not found at expected location: %s"%(file))
+            sys.exit(1)
     # Check file format of input files (fasta or fastq, gz or not gz)
     (fasta_files, fastq_files, invalid_files) = file_format(inputfile_lst)
 
@@ -883,7 +873,7 @@ if __name__ == "__main__":
    
     # Load KMA database into shared memory
     if args.shared_memory:
-        cmd = "kma_shm -t_db {}".format(db_species_scheme)
+        cmd = "{}/kma_shm -t_db {}".format(os.path.dirname(kma_path),db_species_scheme)
         proc = subprocess.Popen(shlex.split(cmd), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         out, err = proc.communicate()
         error_code = proc.returncode
@@ -891,7 +881,8 @@ if __name__ == "__main__":
             print("Shared memory could not be used.\nErr: {}".format(err))
     
     if len(fastq_files) == 0 and len(fasta_files) == 0:
-        sys.exit("Input file must be fastq or fasta format.")
+        print("Input file must be fastq or fasta format.\n")
+        sys.exit(1)
         
     # If input is raw reads
     if len(fastq_files) >= 1:
@@ -919,7 +910,8 @@ if __name__ == "__main__":
         if args.prodigal_path != "prodigal":
             prod_path = os.path.abspath(args.prodigal_path)
             if not os.path.exists(prod_path):
-                sys.exit("Input Error: prodigal path does not exist.")
+                print("Input Error: prodigal path does not exist.\n")
+                sys.exit(1)
         else:
             prod_path = args.prodigal_path
         
@@ -931,8 +923,8 @@ if __name__ == "__main__":
             
             # Run KMA to find alleles from fasta file
             seq_kma = KMA(CDS_file, tmp_dir, db_species_scheme, loci_list, kma_path, fasta = True)
-            cmd = "rm " + CDS_file    
-            subprocess.run(cmd, shell=True)
+            cmd = "rm {}".format(CDS_file)
+            subprocess.Popen(cmd, shell=True, stdout=subprocess.DEVNULL)
             
             # Get called allelel
             allel_output += seq_kma.best_allel_hits()
@@ -943,7 +935,7 @@ if __name__ == "__main__":
 
     # Destroy KMA database from shared memory
     if args.shared_memory:
-        cmd = "kma_shm -t_db {} -destroy".format(db_species_scheme)
+        cmd = "{}/kma_shm -t_db {} -destroy".format(os.path.dirname(kma_path),db_species_scheme)
         proc = subprocess.Popen(shlex.split(cmd), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         out, err = proc.communicate()
         error_code = proc.returncode
@@ -1013,4 +1005,3 @@ if __name__ == "__main__":
                 tr = Tree("{}/allele_tree.newick".format(outdir))
 
                 print(tr.get_ascii())
-                
