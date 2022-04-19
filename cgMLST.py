@@ -713,15 +713,14 @@ def runProd(assembly_path, prod_path, outdir):
     assembly_path contains the contigs/assembled genome in fasta format.
     prod_path is the path prodigal specified with -p.
     """
-    # Process assembly input and define CDS filename
     if SeqFile.is_gzipped(assembly_path):
         # Unzip file before running Prodigal
         cmd = "gzip -d {}".format(assembly_path)
         subprocess.Popen(cmd, shell=True, stdout=subprocess.DEVNULL)
-        assembly_path = assembly_path[:-3]  # remove .gz eding
-        CDS_file = os.path.join(outdir, os.path.basename(assembly_path) + ".cds")
-    else:    
-        CDS_file = os.path.join(outdir, os.path.basename(assembly_path) + ".cds")
+        assembly_path = assembly_path.strip(".gz")  # remove .gz eding
+    # Process assembly input and define CDS filename
+    filename = os.path.basename(assembly_path).split(".")[0] 
+    CDS_file = os.path.join(outdir, filename + ".cds")
         
     # Execute prodigal and write coding regions to file
     cmd = "{} -c -q -i {} -d {}".format(prod_path,assembly_path,CDS_file)
@@ -733,7 +732,7 @@ def runProd(assembly_path, prod_path, outdir):
     print("Prodigal call ended")
     cmd = "rm {}".format(assembly_path)       
     subprocess.Popen(cmd, shell=True, stdout=subprocess.DEVNULL) 
-        
+    return CDS_file   
         
 
 if __name__ == "__main__":
@@ -910,7 +909,7 @@ if __name__ == "__main__":
         if args.prodigal_path != "prodigal":
             prod_path = os.path.abspath(args.prodigal_path)
             if not os.path.exists(prod_path):
-                print("Input Error: prodigal path does not exist.\n")
+                print("Input Error: prodigal path does not exist: " + prod_path + "\n")
                 sys.exit(1)
         else:
             prod_path = args.prodigal_path
@@ -918,8 +917,7 @@ if __name__ == "__main__":
         # Run KMA on coding regions
         for seqfile in fasta_files:          
             # Run prodigal to identify coding regions
-            runProd(seqfile, prod_path, outdir)
-            CDS_file = outdir + "/" + seqfile[:-3] + ".cds"
+            CDS_file = runProd(seqfile, prod_path, outdir)
             
             # Run KMA to find alleles from fasta file
             seq_kma = KMA(CDS_file, tmp_dir, db_species_scheme, loci_list, kma_path, fasta = True)
