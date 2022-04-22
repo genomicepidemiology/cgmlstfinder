@@ -2,7 +2,7 @@ cgMLSTFinder
 ===================
 
 Core genome Multi-Locus Sequence Typing
-cgMLSTFinder runs KMA[1] against a chosen core genome MLST (cgMLST) database and outputs the detected alleles in a matrix file.
+cgMLSTFinder runs KMA [1] against a chosen core genome MLST (cgMLST) database and outputs the detected alleles in a matrix file.
 
 
 Documentation
@@ -38,7 +38,7 @@ Build Docker container
 docker build -t cgmlstfinder .
 ```
 
-#Download and install cgMLST database
+Download and install cgMLST database
 ```bash
 # Go to the directory where you want to store the cgmlst database
 cd /path/to/some/dir
@@ -50,7 +50,7 @@ cgMLST_DB=$(pwd)
 python3 INSTALL.py
 ```
 
-This script will install the already kma_indexed cgMLST schemes. 
+This script will install the already kma indexed cgMLST schemes. 
 
 ## Dependencies
 In order to run the program without using docker, Python 3.5 (or newer) should be installed along with the following versions of the modules (or newer).
@@ -64,9 +64,9 @@ pip3 install ete3
 ```
 #### KMA
 KMA should be installed. The instructions here will install the newest version of KMA in the default location cgMLST uses. 
-KMA can be installed in another location but the path to KMA will then need to be specified every time you run ResFinder unless you add the kma program to your PATH.
+KMA can be installed in another location but the path to KMA will then need to be specified every time you run cgMLSTFinder unless you add the kma program to your PATH.
 ```bash
-# Go to the directoy in which you installed the ResFinder tool
+# Go to the directoy in which you installed the cgMLSTFinder tool
 cd /path/to/some/dir/cgmlstfinder
 git clone https://bitbucket.org/genomicepidemiology/kma.git
 cd kma && make
@@ -103,7 +103,7 @@ usage: cgMLST.py [-h] -i INPUT_FILE(S) -s SPECIES [-db DB_DIR] [-o OUTPUT_DIR] [
 
 
   -i INPUT --inputfile        FASTQ file(s) or FASTA file to do cgMLST on. 
-						List several filenames in a commasepareted manner. 
+						List several filenames in a comma separeted manner without white spaces 
   -s SPECIES, --species SPECIES
                         Species. Must match the name of a species in the
                         database
@@ -130,7 +130,7 @@ optional arguments:
 
 ```
 
-Examplea of command to run cgMLSTFinder:
+Examples of command to run cgMLSTFinder:
 
 ```bash
 python3 cgMLST.py /path/to/isolate.fq.gz -s salmonella -o /path/to/outdir -db /path/to/cgmlstfinder_db/
