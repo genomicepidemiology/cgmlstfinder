@@ -149,13 +149,11 @@ Citation
 
 Please cite the relevant typing scheme, if you intend to publish your results:
 
-1.Campylobacter jejuni/coli (pubMLST): Campylobacter Multi Locus Sequence Typing website sited at the University of Oxford (Jolley & Maiden 2010, BMC Bioinformatics, 11:595. publication).
-2.Clostridium (EnteroBase)(website):Global gen, et al.,Global genomic population structure of Clostridioides difficile (2019), bioRxiv Aug. 6, 2019.Publication.
-3.Escherichia coli (EnteroBase)website: Zhou Z., Alikhan NF, Mohamed K, the Agama Study Group, Achtman M (2020), The EnteroBase user's guide, with case studies on Salmonella transmissions, Yersinia pestis phylogeny and Escherichia core genomic diversity. Genome Res. 2020. 30: 138-152. Publication.
-4.Listeria monocytogenes (Institute Pasteur): Listeria Multi Locus Sequence Typing website. Moura A, Criscuolo A, Pouseele H, Maury MM, Leclercq A, Tarr C, Björkman JT, Dallman T, Reimer A, Enouf V, Larsonneur E, Carleton H, Bracq-Dieye H, Katz LS, Jones L, Touchon M, Tourdjman M, Walker M, Stroika S, Cantinelli T, Chenal-Francisque V, Kucerova Z, Rocha EPC, Nadon C, Grant K, Nielsen EM, Pot B, Gerner-Smidt P, Lecuit M, Brisse S. Whole genome-based population biology and epidemiological surveillance of Listeria monocytogenes. Nature Microbiology 2016, 2:16185. (publication).
-5.Salmonella (EnteroBase)(website):Alikhan NF, Zhou Z,Sergeant MJ, Achtman M. A genomic overview of the population structure of Salmonella. PLoS genetics 2018, 14 (4): e1007261. Publication.
-6.Yersinia (EnteroBase)website: Zhou Z., Alikhan NF, Mohamed K, the Agama Study Group, Achtman M (2020), The EnteroBase user's guide, with case studies on Salmonella transmissions, Yersinia pestis phylogeny and Escherichia core genomic diversity. Genome Res. 2020. 30: 138-152. Publication.
-
+**Campylobacter jejuni/coli (pubMLST)**: Campylobacter Multi Locus Sequence Typing website sited at the University of Oxford (Jolley & Maiden 2010, BMC Bioinformatics, 11:595. publication).
+**Clostridium (EnteroBase)**:Global gen, et al.,Global genomic population structure of Clostridioides difficile (2019), bioRxiv Aug. 6, 2019.Publication.
+**Escherichia coli (EnteroBase)**: Zhou Z., Alikhan NF, Mohamed K, the Agama Study Group, Achtman M (2020), The EnteroBase user's guide, with case studies on Salmonella transmissions, Yersinia pestis phylogeny and Escherichia core genomic diversity. Genome Res. 2020. 30: 138-152. Publication.
+**Salmonella (EnteroBase)**:Alikhan NF, Zhou Z,Sergeant MJ, Achtman M. A genomic overview of the population structure of Salmonella. PLoS genetics 2018, 14 (4): e1007261. Publication.
+**Yersinia (EnteroBase)**: Zhou Z., Alikhan NF, Mohamed K, the Agama Study Group, Achtman M (2020), The EnteroBase user's guide, with case studies on Salmonella transmissions, Yersinia pestis phylogeny and Escherichia core genomic diversity. Genome Res. 2020. 30: 138-152. Publication.
 
 References
 =======
