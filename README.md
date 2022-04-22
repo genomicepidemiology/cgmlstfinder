@@ -150,9 +150,13 @@ Citation
 Please cite the relevant typing scheme, if you intend to publish your results:
 
 **Campylobacter jejuni/coli (pubMLST)**: Campylobacter Multi Locus Sequence Typing website sited at the University of Oxford (Jolley & Maiden 2010, BMC Bioinformatics, 11:595. publication).
+
 **Clostridium (EnteroBase)**:Global gen, et al.,Global genomic population structure of Clostridioides difficile (2019), bioRxiv Aug. 6, 2019.Publication.
+
 **Escherichia coli (EnteroBase)**: Zhou Z., Alikhan NF, Mohamed K, the Agama Study Group, Achtman M (2020), The EnteroBase user's guide, with case studies on Salmonella transmissions, Yersinia pestis phylogeny and Escherichia core genomic diversity. Genome Res. 2020. 30: 138-152. Publication.
+
 **Salmonella (EnteroBase)**:Alikhan NF, Zhou Z,Sergeant MJ, Achtman M. A genomic overview of the population structure of Salmonella. PLoS genetics 2018, 14 (4): e1007261. Publication.
+
 **Yersinia (EnteroBase)**: Zhou Z., Alikhan NF, Mohamed K, the Agama Study Group, Achtman M (2020), The EnteroBase user's guide, with case studies on Salmonella transmissions, Yersinia pestis phylogeny and Escherichia core genomic diversity. Genome Res. 2020. 30: 138-152. Publication.
 
 References
