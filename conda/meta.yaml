@@ -1,0 +1,32 @@
+package:
+  name: cgmlstfinder
+  version: 1.1.5
+
+source:
+  url: https://bitbucket.org/genomicepidemiology/cgMLSTFinder/get/1.1.5.tar.gz
+
+build:
+  number: 0
+  noarch: python
+
+requirements:
+  host:
+    - python>=3.5
+    - kma
+    - wget
+  run:
+    - python>=3.5
+    - kma
+    - biopython
+    - ete3
+    - tabulate
+    - cgecore
+    - blast
+test:
+  commands:
+    - cgMLST.py -h | grep cgMLST.py >/dev/null
+
+about:
+  home: https://bitbucket.org/genomicepidemiology/cgMLSTFinder
+  summary: 'cgMLSTFinder service contains one python script cgMLST.py which is the script of the latest version of the cgMLSTFinder service. The method assigns core genome MLST alleles based on WGS data for several isolates. If 3 or more isolates are run together in one go, and the '--neighbor' flag is set with a executable neighbor program, the allele dictances between the isolates will be calculated and a neighbor joining tree will be generated.'
+  license: Apache-2.0
