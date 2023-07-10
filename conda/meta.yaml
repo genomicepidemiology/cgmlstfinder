@@ -28,5 +28,5 @@ test:
 
 about:
   home: https://bitbucket.org/genomicepidemiology/cgMLSTFinder
-  summary: 'The cgMLSTFinder service contains one python script cgMLST.py which is the script of the latest version of the cgMLSTFinder service. The method assigns core genome MLST alleles based on WGS data for several isolates. If 3 or more isolates are run together in one go, and the '--neighbor' flag is set with a executable neighbor program, the allele dictances between the isolates will be calculated and a neighbor joining tree will be generated.'
   license: Apache-2.0
+  summary: "Core genome Multi-Locus Sequence Typing cgMLSTFinder runs KMA [1] against a chosen core genome MLST (cgMLST) database and outputs the detected alleles in a matrix file."
